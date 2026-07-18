@@ -41,6 +41,7 @@ Prerequisites are Ruby 3.2+, Python 3, `jq`, and Docker.
 
 ```sh
 ruby test/repository_test.rb
+ruby test/runtime_tuple_promoter_test.rb
 OPENCODE_RUBY_PATH=/data/projects/opencode-ruby-alpha6 \
   ruby ruby/opencode_ruby_fixture_contract.rb
 OPENCODE_RUBY_PATH=/data/projects/opencode-ruby-alpha6 \
