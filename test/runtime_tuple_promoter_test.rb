@@ -155,6 +155,26 @@ class RuntimeTuplePromoterTest < Minitest::Test
     assert_equal before, File.binread(manifest_path)
   end
 
+  def test_rejects_known_failed_baseline_even_with_passing_evidence
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "current")["status"] = "observed-production-contract-failed"
+    write_manifest(manifest)
+    candidate, previous = write_matching_evidence
+    before = File.binread(manifest_path)
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.promote(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: certification(CANDIDATE_TIME, candidate),
+        previous_certification: certification(CURRENT_TIME, previous)
+      )
+    end
+
+    assert_match(/known to fail/, error.message)
+    assert_equal before, File.binread(manifest_path)
+  end
+
   def test_rejects_evidence_that_does_not_match_the_complete_tuple
     candidate, previous = write_matching_evidence
     manifest = JSON.parse(File.read(manifest_path))
@@ -249,8 +269,8 @@ class RuntimeTuplePromoterTest < Minitest::Test
           "candidate" => {
             "status" => "compatibility-certified",
             "certified_at" => "2026-07-18T10:00:00Z",
-            "opencode_ruby" => {"version" => "0.0.1.alpha6", "git_commit" => RUBY_CANDIDATE},
-            "opencode_rails" => {"version" => "0.0.1.alpha6", "git_commit" => RAILS_CANDIDATE},
+            "opencode_ruby" => {"version" => "0.0.1.alpha7", "git_commit" => RUBY_CANDIDATE},
+            "opencode_rails" => {"version" => "0.0.1.alpha7", "git_commit" => RAILS_CANDIDATE},
             "runtime" => {"image" => CANDIDATE_IMAGE, "reported_version" => "1.18.3"}
           },
           "previous" => nil

@@ -127,10 +127,7 @@ OPENCODE_RUBY_COMMIT="$gem_commit" \
 
 llm_stats="$(docker exec "$llm_container_name" wget -qO- http://127.0.0.1:8080/stats)"
 request_count="$(jq -r '.request_count' <<<"$llm_stats")"
-if [[ "$request_count" -lt 1 ]]; then
-  echo "OpenCode never called the deterministic model" >&2
-  exit 1
-fi
+ruby "$repo_root/ruby/exact_live_contract.rb" "$request_count"
 
 jq -cn \
   --arg status pass \

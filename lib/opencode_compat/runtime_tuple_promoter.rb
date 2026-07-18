@@ -15,6 +15,7 @@ module OpenCodeCompat
     IMMUTABLE_IMAGE = /\A[^@\s]+@sha256:[0-9a-f]{64}\z/
     UTC_TIMESTAMP = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\z/
     CERTIFICATION_STATUS = "pass"
+    NON_CERTIFIABLE_TUPLE_STATUSES = %w[observed-production-contract-failed].freeze
     TUPLE_METADATA_KEYS = %w[
       certification
       certified_at
@@ -172,6 +173,11 @@ module OpenCodeCompat
     end
 
     def certify_previous!(tuple, consumer:, profile:, supplied:, expected_fingerprint:)
+      if NON_CERTIFIABLE_TUPLE_STATUSES.include?(tuple["status"])
+        raise PromotionError,
+              "current tuple is known to fail the compatibility contract and cannot become a certified rollback"
+      end
+
       if tuple["status"] == "certified"
         validate_recorded_certification!(
           tuple,

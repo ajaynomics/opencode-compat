@@ -1,6 +1,11 @@
 {
   "repository": "ajaynomics/opencode-ruby",
-  "ref": "a116b2708cc148f61b1e1fae0405553c099f4202",
-  "version": "0.0.1.alpha6",
+  "ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+  "version": "0.0.1.alpha7",
+  "tag_provenance": {
+    "tag": "v0.0.1.alpha7",
+    "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645",
+    "peeled_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+  },
   "status": "candidate"
 }

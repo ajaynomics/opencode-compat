@@ -1,0 +1,16 @@
+{
+  "schema_version": 1,
+  "consumer": "ajent-rails",
+  "profile": "rails-persisted-turn",
+  "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+  "status": "pass",
+  "certified_at": "2026-07-18T22:03:14Z",
+  "tuple_sha256": "sha256:2fc1026cf247b5ad5677bfa4673c1073f7c2478769dca0cc8443a0924cebfca3",
+  "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
+  "canary": {
+    "checked_at": "2026-07-18T21:58:00Z",
+    "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+    "persisted_final_text": "compat-ok",
+    "model_request_count": 1
+  }
+}

@@ -1,0 +1,51 @@
+{
+  "schema_version": 1,
+  "client": {
+    "repository": "ajaynomics/opencode-ruby",
+    "version": "0.0.1.alpha2",
+    "commit": "889d38332f98f5f7b76d16952b7204d8a5b9a662"
+  },
+  "rails_client": {
+    "repository": "ajaynomics/opencode-rails",
+    "version": "0.0.1.alpha2",
+    "commit": "9b0c4cd3cd31bdfebbb89567daca012d68a356ea"
+  },
+  "recorded_at": "2026-07-18T22:04:14Z",
+  "status": "fail",
+  "failure": {
+    "expected_text": "compat-ok",
+    "full_text": "compat-ok\n\ncompat-ok",
+    "llm_request_count": 1,
+    "reason": "The client concatenates the streamed and authoritative text, duplicating the final response."
+  },
+  "exact_image_contracts": [
+    {
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "server_version": "1.16.1",
+      "status": "fail"
+    },
+    {
+      "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "server_version": "1.17.18",
+      "status": "fail"
+    },
+    {
+      "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "server_version": "1.18.3",
+      "status": "fail"
+    },
+    {
+      "target": "ajent-production-artifact",
+      "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
+      "server_version": "1.18.3",
+      "status": "fail"
+    },
+    {
+      "target": "mushu-production-artifact",
+      "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+      "server_version": "0.0.0-permission-shortcuts-202606300721",
+      "status": "fail"
+    }
+  ],
+  "promotion_effect": "The observed alpha2 consumer baselines are not eligible for certified previous tuples. A distinct, tested rollback consumer commit pinned to alpha7 is required before the two-certified-tuples policy can be satisfied."
+}

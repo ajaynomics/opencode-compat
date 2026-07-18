@@ -1,0 +1,17 @@
+{
+  "schema_version": 1,
+  "consumer": "mushu",
+  "profile": "ruby-rest-sse",
+  "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
+  "status": "pass",
+  "certified_at": "2026-07-18T22:03:14Z",
+  "tuple_sha256": "sha256:6171647c7db6d88d52882695c6106a4391e87d0bb1f9e0c48151b2bc1e95b318",
+  "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
+  "canary": {
+    "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
+    "checked_at": "2026-07-18T21:53:00Z",
+    "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+    "persisted_final_text": "compat-ok",
+    "model_request_count": 1
+  }
+}

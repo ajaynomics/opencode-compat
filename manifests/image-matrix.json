@@ -7,8 +7,14 @@
       "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
       "tag_provenance": "ghcr.io/anomalyco/opencode:1.16.1",
       "consumers": ["travelwolf"],
-      "profiles": ["ruby-rest-sse", "rails-persisted-turn"],
-      "certification_status": "certified"
+      "profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn"],
+      "certification_status": "certified",
+      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "certified_at": "2026-07-18T22:03:12Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1
     },
     {
       "id": "upstream-1.17.18",
@@ -16,8 +22,14 @@
       "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
       "tag_provenance": "ghcr.io/anomalyco/opencode:1.17.18",
       "consumers": ["opencode-ajent"],
-      "profiles": ["plugin-ledger", "ruby-rest-sse"],
-      "certification_status": "certified"
+      "profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["plugin-ledger"],
+      "certification_status": "certified",
+      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "certified_at": "2026-07-18T22:03:13Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1
     },
     {
       "id": "upstream-1.18.3",
@@ -25,34 +37,49 @@
       "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
       "tag_provenance": "ghcr.io/anomalyco/opencode:1.18.3",
       "consumers": ["ajent-rails"],
-      "profiles": ["ruby-rest-sse", "rails-persisted-turn", "plugin-ledger"],
-      "certification_status": "certified"
+      "profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"],
+      "certification_status": "certified",
+      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "certified_at": "2026-07-18T22:03:14Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1
     }
   ],
   "host_canary": [
     {
-      "id": "ajent-blackline-live",
+      "id": "ajent-blackline-alpha7-canary",
       "consumer": "ajent-rails",
-      "registry_ref": "docker-registry:5000/opencode-blackline:83eed3c247a352842b08fc5cf339c4d0acdaacba",
-      "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
+      "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+      "tag_provenance": "ajent-opencode-blackline-canary:96552893",
+      "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+      "source_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
       "reported_version": "1.18.3",
       "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
-      "profiles": ["ruby-rest-sse", "rails-persisted-turn", "plugin-ledger"],
+      "profiles": ["rails-persisted-turn"],
       "certification_status": "candidate-certified",
-      "certified_candidate": "a116b2708cc148f61b1e1fae0405553c099f4202",
-      "certified_at": "2026-07-18T20:34:10Z"
+      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "certified_rails_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "certified_at": "2026-07-18T21:58:00Z",
+      "persisted_final_text": "compat-ok",
+      "model_request_count": 1
     },
     {
-      "id": "mushu-permission-shortcuts-live",
+      "id": "mushu-permission-shortcuts-alpha7-canary",
       "consumer": "mushu",
-      "registry_ref": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+      "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
+      "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
+      "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
       "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
-      "reported_version": "0.0.0-permission-shortcuts-202606300721",
       "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+      "reported_version": "0.0.0-permission-shortcuts-202606300721",
       "profiles": ["ruby-rest-sse"],
       "certification_status": "candidate-certified",
-      "certified_candidate": "a116b2708cc148f61b1e1fae0405553c099f4202",
-      "certified_at": "2026-07-18T20:34:08Z"
+      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "certified_at": "2026-07-18T21:53:00Z",
+      "persisted_final_text": "compat-ok",
+      "model_request_count": 1
     }
   ]
 }
