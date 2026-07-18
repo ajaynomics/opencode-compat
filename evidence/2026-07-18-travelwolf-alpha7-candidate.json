@@ -1,0 +1,18 @@
+{
+  "schema_version": 1,
+  "consumer": "travelwolf",
+  "profile": "rails-persisted-turn",
+  "consumer_commit": "19747b59fa21e12560afd9edd73ed674ab3a644c",
+  "status": "pass",
+  "certified_at": "2026-07-18T22:03:14Z",
+  "tuple_sha256": "sha256:a7519e661f74d86788928540429c953edcbf20d26321c0dd2b72cd0a1b995b61",
+  "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
+  "canary": {
+    "run_id": "20260718215135-8d8102c0",
+    "checked_at": "2026-07-18T21:51:56.552Z",
+    "final_text": "TRAVELWOLF_ALPHA7_SUBSCRIBE_READY",
+    "application_prompt_count": 1,
+    "model_request_count_observed": false,
+    "cleanup_status": "pass"
+  }
+}

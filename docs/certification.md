@@ -18,6 +18,11 @@ The gate requires:
 
 Health-only probes do not certify a tuple.
 
+The shared live probe is intentionally strict: `full_text` must equal the
+expected text byte-for-byte and the deterministic model must receive exactly
+one request. A response that merely contains the expected text, including a
+duplicated `compat-ok\n\ncompat-ok`, fails.
+
 ## Promotion
 
 Promotion is a reviewed manifest change that moves the old `current` tuple to
@@ -78,9 +83,34 @@ only in a `tag_provenance` field; `image`, `registry_ref`, and base image fields
 must use `image@sha256:...`, while a private local artifact may use an exact
 `docker_image_id`.
 
+An application canary and the shared deterministic contract prove different
+layers. For example, a consumer may instrument one application prompt without
+being able to observe the underlying model request. Record that distinction
+explicitly; do not infer a model request count from an application prompt
+count. The exact-image shared contract supplies the model-request proof.
+
+Likewise, the public image job executes `ruby-rest-sse`; it does not silently
+certify Rails persistence, plugin hooks, voice streaming, strict route gates,
+or provider hooks. Those appear as `required_consumer_profiles` in the image
+matrix and need their own consumer evidence before a full tuple can pass.
+
 The command clears `candidate` after promotion. It sets the repository-wide
 `migration_state` to `certified` only after every consumer has certified
 `current` and `previous` tuples and no pending candidate.
+
+## Bootstrap with a failing baseline
+
+If the observed production baseline fails the current contract, keep its full
+coordinates for emergency recovery but mark it failed. Do not create passing
+evidence for it and do not promote it into `previous`. The promoter rejects
+known-failed baselines even if a document claims `pass`.
+
+The safe bootstrap is two-stage: certify and roll out the new candidate, then
+create and canary a distinct consumer rollback commit that preserves the same
+known-good client and exact runtime. Only after both immutable consumer commits
+have real passing evidence can the manifest honestly contain certified
+`current` and `previous` tuples. Until then, `promotion_readiness` remains
+blocked and the candidate PR must not be treated as a deploy authorization.
 
 ## Rollback
 

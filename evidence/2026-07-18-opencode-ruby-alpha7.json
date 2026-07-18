@@ -1,0 +1,123 @@
+{
+  "schema_version": 1,
+  "candidate": {
+    "opencode_ruby": {
+      "repository": "ajaynomics/opencode-ruby",
+      "version": "0.0.1.alpha7",
+      "commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "tag_provenance": {
+        "tag": "v0.0.1.alpha7",
+        "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645",
+        "peeled_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+      }
+    },
+    "opencode_rails": {
+      "repository": "ajaynomics/opencode-rails",
+      "version": "0.0.1.alpha7",
+      "commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "tag_provenance": {
+        "tag": "v0.0.1.alpha7",
+        "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c",
+        "peeled_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb"
+      }
+    }
+  },
+  "fixture_contract": {
+    "status": "pass",
+    "fixture_count": 7
+  },
+  "opencode_ruby_unit_contract": {
+    "status": "pass",
+    "runs": 26,
+    "assertions": 63
+  },
+  "opencode_rails_unit_contract": {
+    "status": "pass",
+    "runs": 55,
+    "assertions": 145
+  },
+  "exact_image_contracts": [
+    {
+      "target": "travelwolf-1.16.1",
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "server_version": "1.16.1",
+      "checked_at": "2026-07-18T22:03:12Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1,
+      "status": "pass"
+    },
+    {
+      "target": "opencode-ajent-1.17.18",
+      "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "server_version": "1.17.18",
+      "checked_at": "2026-07-18T22:03:13Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1,
+      "status": "pass"
+    },
+    {
+      "target": "ajent-base-1.18.3",
+      "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "server_version": "1.18.3",
+      "checked_at": "2026-07-18T22:03:14Z",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "llm_request_count": 1,
+      "status": "pass"
+    }
+  ],
+  "consumer_canaries": [
+    {
+      "consumer": "ajent-rails",
+      "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+      "tag_provenance": "ajent-opencode-blackline-canary:96552893",
+      "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+      "source_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+      "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "server_version": "1.18.3",
+      "checked_at": "2026-07-18T21:58:00Z",
+      "application_path": "Blackline::GenerateResponseJob",
+      "persisted_final_text": "compat-ok",
+      "model_request_count": 1,
+      "status": "pass"
+    },
+    {
+      "consumer": "mushu",
+      "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
+      "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
+      "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+      "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+      "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+      "server_version": "0.0.0-permission-shortcuts-202606300721",
+      "checked_at": "2026-07-18T21:53:00Z",
+      "persisted_final_text": "compat-ok",
+      "model_request_count": 1,
+      "status": "pass"
+    },
+    {
+      "consumer": "travelwolf",
+      "consumer_commit": "19747b59fa21e12560afd9edd73ed674ab3a644c",
+      "run_id": "20260718215135-8d8102c0",
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "server_version": "1.16.1",
+      "started_at": "2026-07-18T21:51:35Z",
+      "checked_at": "2026-07-18T21:51:56.552Z",
+      "final_text": "TRAVELWOLF_ALPHA7_SUBSCRIBE_READY",
+      "application_prompt_count": 1,
+      "model_request_count_observed": false,
+      "cleanup_status": "pass",
+      "status": "pass"
+    }
+  ],
+  "contract": [
+    "health",
+    "create-session",
+    "subscribe-ready-before-async-prompt",
+    "exactly-one-deterministic-model-request",
+    "sse-terminal",
+    "exact-authoritative-final-exchange",
+    "delete-session"
+  ]
+}

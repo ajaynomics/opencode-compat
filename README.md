@@ -18,6 +18,9 @@ prompts, credentials, sessions, or user data belong here.
   neither workflow deploys or changes a consumer.
 - Each consumer retains both `current` and `previous` certified tuples so a
   rollback restores the gem and server together.
+- A failing bootstrap baseline is never relabeled as a certified `previous`
+  tuple. Promotion stays blocked until a distinct rollback consumer commit is
+  pinned to a passing client/runtime tuple and canaried.
 
 ## What is covered
 
@@ -42,9 +45,10 @@ Prerequisites are Ruby 3.2+, Python 3, `jq`, and Docker.
 ```sh
 ruby test/repository_test.rb
 ruby test/runtime_tuple_promoter_test.rb
-OPENCODE_RUBY_PATH=/data/projects/opencode-ruby-alpha6 \
+ruby test/exact_live_contract_test.rb
+OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-78b6f9c9e9c7d58b699af1c3c17764acd33de798 \
   ruby ruby/opencode_ruby_fixture_contract.rb
-OPENCODE_RUBY_PATH=/data/projects/opencode-ruby-alpha6 \
+OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-78b6f9c9e9c7d58b699af1c3c17764acd33de798 \
 OPENCODE_IMAGE='ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a' \
   scripts/run_image_contract.sh
 ```
@@ -52,7 +56,9 @@ OPENCODE_IMAGE='ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca
 The live contract starts a deterministic local OpenAI-compatible model stub and
 an isolated OpenCode container. It creates a session, subscribes, submits an
 async prompt, observes terminal SSE, fetches the authoritative exchange, and
-deletes the session. It never calls an external model provider.
+deletes the session. Passing requires the authoritative final text to equal the
+expected text byte-for-byte and the deterministic model stub to observe exactly
+one request. It never calls an external model provider.
 
 ## Adding an upstream release
 

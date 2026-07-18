@@ -34,7 +34,8 @@ unless matrix.fetch("public_ci").any? { |target| target.fetch("image") == image 
     "image" => image,
     "tag_provenance" => "ghcr.io/anomalyco/opencode:#{version}",
     "consumers" => ["upstream-candidate"],
-    "profiles" => ["ruby-rest-sse", "rails-persisted-turn", "voice-stream", "strict-v2", "plugin-ledger", "provider-hooks"],
+    "profiles" => ["ruby-rest-sse"],
+    "required_consumer_profiles" => ["rails-persisted-turn", "voice-stream", "strict-v2", "plugin-ledger", "provider-hooks"],
     "certification_status" => "pending"
   }
 end

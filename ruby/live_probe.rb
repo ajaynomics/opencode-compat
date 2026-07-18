@@ -2,6 +2,7 @@
 
 require "json"
 require "time"
+require_relative "exact_live_contract"
 
 gem_path = File.expand_path(ENV.fetch("OPENCODE_RUBY_PATH"))
 $LOAD_PATH.unshift(File.join(gem_path, "lib"))
@@ -32,9 +33,7 @@ begin
     observed_parts << JSON.parse(JSON.generate(part))
   end
 
-  unless result.full_text.include?(expected_text)
-    raise "Expected final text to include #{expected_text.inspect}, got #{result.full_text.inspect}"
-  end
+  OpenCodeCompat::ExactLiveContract.assert_final_text!(result.full_text, expected_text)
 
   messages = client.get_messages(session_id)
   assistant_messages = Array(messages).select { |message| message.dig(:info, :role) == "assistant" }
