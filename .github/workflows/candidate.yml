@@ -20,7 +20,7 @@ jobs:
       - uses: ruby/setup-ruby@v1
         with:
           ruby-version: "3.4"
-      - run: ruby test/repository_test.rb
+      - run: ruby test/repository_test.rb && ruby test/runtime_tuple_promoter_test.rb
 
   prepare:
     runs-on: ubuntu-latest
