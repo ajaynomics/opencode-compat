@@ -3,7 +3,9 @@
   "candidate": {
     "repository": "ajaynomics/opencode-ruby",
     "version": "0.0.1.alpha6",
-    "commit": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+    "commit": "a116b2708cc148f61b1e1fae0405553c099f4202",
+    "certified_payload_commit": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+    "payload_equivalence": "release differs only in .github/workflows/test.yml, which is outside the gem payload",
     "transport_implementation_commit": "5113a953db8026697262bd4f97197a3d13077762"
   },
   "fixture_contract": {

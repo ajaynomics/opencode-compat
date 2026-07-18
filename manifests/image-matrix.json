@@ -39,7 +39,7 @@
       "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
       "profiles": ["ruby-rest-sse", "rails-persisted-turn", "plugin-ledger"],
       "certification_status": "candidate-certified",
-      "certified_candidate": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+      "certified_candidate": "a116b2708cc148f61b1e1fae0405553c099f4202",
       "certified_at": "2026-07-18T20:34:10Z"
     },
     {
@@ -51,7 +51,7 @@
       "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
       "profiles": ["ruby-rest-sse"],
       "certification_status": "candidate-certified",
-      "certified_candidate": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+      "certified_candidate": "a116b2708cc148f61b1e1fae0405553c099f4202",
       "certified_at": "2026-07-18T20:34:08Z"
     }
   ]

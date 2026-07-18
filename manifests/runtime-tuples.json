@@ -18,8 +18,8 @@
       },
       "candidate": {
         "status": "compatibility-certified",
-        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "8adc95985a79b16e6e4bc0c0f827d638f244d509"},
-        "opencode_rails": {"version": "0.0.1.alpha6", "git_commit": "ca08bb36e82cbe059f2c0dedbed0ad2c602d1afd"},
+        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "a116b2708cc148f61b1e1fae0405553c099f4202"},
+        "opencode_rails": {"version": "0.0.1.alpha6", "git_commit": "17025f0ed955899c57830eaea34da49f07250fcc"},
         "runtime": {
           "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
           "reported_version": "1.18.3",
@@ -43,8 +43,8 @@
       },
       "candidate": {
         "status": "compatibility-certified",
-        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "8adc95985a79b16e6e4bc0c0f827d638f244d509"},
-        "opencode_rails": {"version": "0.0.1.alpha6", "git_commit": "ca08bb36e82cbe059f2c0dedbed0ad2c602d1afd"},
+        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "a116b2708cc148f61b1e1fae0405553c099f4202"},
+        "opencode_rails": {"version": "0.0.1.alpha6", "git_commit": "17025f0ed955899c57830eaea34da49f07250fcc"},
         "runtime": {
           "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
           "reported_version": "1.16.1"
@@ -68,7 +68,7 @@
       },
       "candidate": {
         "status": "compatibility-certified",
-        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "8adc95985a79b16e6e4bc0c0f827d638f244d509"},
+        "opencode_ruby": {"version": "0.0.1.alpha6", "git_commit": "a116b2708cc148f61b1e1fae0405553c099f4202"},
         "runtime": {
           "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
           "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
