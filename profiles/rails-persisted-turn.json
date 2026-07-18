@@ -1,0 +1,13 @@
+{
+  "id": "rails-persisted-turn",
+  "owner": "opencode-rails",
+  "extends": ["ruby-rest-sse"],
+  "required_behaviors": [
+    "session-recovery",
+    "mid-stream-snapshot",
+    "terminal-state-cas",
+    "authoritative-final-exchange",
+    "aggregate-turn-usage",
+    "artifact-reconciliation"
+  ]
+}

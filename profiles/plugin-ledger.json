@@ -1,0 +1,11 @@
+{
+  "id": "plugin-ledger",
+  "owner": "opencode-ajent",
+  "required_behaviors": [
+    "exact-upstream-image",
+    "exact-plugin-version",
+    "runtime-launcher-separate-from-plugin",
+    "ledger-hooks",
+    "permission-hooks"
+  ]
+}

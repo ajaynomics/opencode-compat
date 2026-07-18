@@ -1,0 +1,11 @@
+{
+  "id": "voice-stream",
+  "owner": "greenroom",
+  "extends": ["ruby-rest-sse"],
+  "required_behaviors": [
+    "legacy-and-current-terminal-events",
+    "aggregate-assistant-usage",
+    "authoritative-final-text",
+    "reconnect-same-stream-without-reprompt"
+  ]
+}

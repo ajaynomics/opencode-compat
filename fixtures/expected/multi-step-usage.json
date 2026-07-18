@@ -1,0 +1,9 @@
+{
+  "full_text": "two steps",
+  "reasoning_text": "",
+  "tool_count": 0,
+  "prompt_blocked": false,
+  "total_cost": 0.46,
+  "total_input_tokens": 30,
+  "total_output_tokens": 10
+}

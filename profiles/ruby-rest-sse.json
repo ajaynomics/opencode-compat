@@ -1,0 +1,19 @@
+{
+  "id": "ruby-rest-sse",
+  "owner": "opencode-ruby",
+  "required_fixtures": [
+    "legacy-idle",
+    "current-status-idle",
+    "delta-before-part",
+    "reasoning-and-final",
+    "multi-step-usage",
+    "interactive-prompts",
+    "unknown-event"
+  ],
+  "transport_scenarios": [
+    "subscribe-ready-before-prompt",
+    "reconnect-without-prompt-replay",
+    "prompt-transport-error-is-visible"
+  ],
+  "live_contract": ["health", "create-session", "async-prompt", "sse-terminal", "final-exchange", "delete-session"]
+}

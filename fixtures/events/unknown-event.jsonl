@@ -1,0 +1,3 @@
+{"type":"server.future-capability","properties":{"sessionID":"ses_fixture","payload":{"new":true}}}
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_text","field":"text","delta":"still works"}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}

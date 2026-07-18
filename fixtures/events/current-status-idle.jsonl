@@ -1,0 +1,4 @@
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_text","field":"text","delta":"current "}}
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_text","field":"text","delta":"ok"}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_text","messageID":"msg_assistant","sessionID":"ses_fixture","type":"text","text":"current ok"}}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}

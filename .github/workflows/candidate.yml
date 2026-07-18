@@ -1,0 +1,93 @@
+name: Candidate compatibility
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      opencode_ruby_ref:
+        description: Candidate opencode-ruby ref; blank uses the manifest
+        required: false
+        type: string
+
+jobs:
+  repository:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+      - run: ruby test/repository_test.rb
+
+  prepare:
+    runs-on: ubuntu-latest
+    outputs:
+      matrix: ${{ steps.matrix.outputs.value }}
+      client_ref: ${{ steps.client.outputs.value }}
+    steps:
+      - uses: actions/checkout@v4
+      - id: matrix
+        run: echo "value=$(ruby scripts/matrix_json.rb)" >> "$GITHUB_OUTPUT"
+      - id: client
+        env:
+          INPUT_REF: ${{ inputs.opencode_ruby_ref }}
+        run: |
+          if [ -n "$INPUT_REF" ]; then
+            echo "value=$INPUT_REF" >> "$GITHUB_OUTPUT"
+          else
+            echo "value=$(jq -r .ref manifests/client-candidate.json)" >> "$GITHUB_OUTPUT"
+          fi
+
+  fixture-contract:
+    needs: prepare
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ajaynomics/opencode-ruby
+          ref: ${{ needs.prepare.outputs.client_ref }}
+          path: client
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: client
+      - name: Candidate unit tests
+        working-directory: client
+        run: bundle exec rake test
+      - name: Shared fixture contract
+        working-directory: client
+        env:
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/client
+          OPENCODE_RUBY_COMMIT: ${{ needs.prepare.outputs.client_ref }}
+        run: bundle exec ruby ../ruby/opencode_ruby_fixture_contract.rb
+
+  exact-image-contract:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
+    name: image ${{ matrix.id }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: ajaynomics/opencode-ruby
+          ref: ${{ needs.prepare.outputs.client_ref }}
+          path: client
+      - uses: ruby/setup-ruby@v1
+        with:
+          ruby-version: "3.4"
+          bundler-cache: true
+          working-directory: client
+      - name: Exercise complete REST and SSE turn
+        env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/client/Gemfile
+          OPENCODE_IMAGE: ${{ matrix.image }}
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/client
+        run: bundle exec scripts/run_image_contract.sh

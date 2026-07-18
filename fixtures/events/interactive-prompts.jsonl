@@ -1,0 +1,7 @@
+{"type":"question.asked","properties":{"id":"que_fixture","sessionID":"ses_fixture","questions":[{"header":"Choice","question":"Continue?","options":[{"label":"Yes","description":"Continue"}]}],"tool":{"messageID":"msg_assistant","callID":"call_question"}}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_tool","messageID":"msg_assistant","sessionID":"ses_fixture","type":"tool","callID":"call_question","tool":"question","state":{"status":"running","input":{}}}}}
+{"type":"permission.asked","properties":{"id":"per_fixture","sessionID":"ses_fixture","permission":"bash","patterns":["echo *"]}}
+{"type":"permission.replied","properties":{"sessionID":"ses_fixture","requestID":"per_fixture","reply":"once"}}
+{"type":"question.replied","properties":{"sessionID":"ses_fixture","requestID":"que_fixture","answers":[["Yes"]]}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_tool","messageID":"msg_assistant","sessionID":"ses_fixture","type":"tool","callID":"call_question","tool":"question","state":{"status":"completed","input":{},"output":"answered"}}}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}

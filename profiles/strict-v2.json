@@ -1,0 +1,11 @@
+{
+  "id": "strict-v2",
+  "owner": "leela",
+  "required_behaviors": [
+    "exact-upstream-version-and-commit",
+    "bun-toolchain-provenance",
+    "v2-route-contract",
+    "every-mutating-route-requires-owner",
+    "admission-and-abort-remain-custom"
+  ]
+}

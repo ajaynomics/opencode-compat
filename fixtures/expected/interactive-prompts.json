@@ -1,0 +1,12 @@
+{
+  "full_text": "",
+  "reasoning_text": "",
+  "tool_count": 1,
+  "prompt_blocked": false,
+  "tool": {
+    "tool": "question",
+    "status": "completed",
+    "callID": "call_question",
+    "opencode_request_id": "que_fixture"
+  }
+}

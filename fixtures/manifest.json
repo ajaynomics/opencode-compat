@@ -1,0 +1,12 @@
+{
+  "schema_version": 1,
+  "fixtures": [
+    {"id": "legacy-idle", "events": "events/legacy-idle.jsonl", "expected": "expected/legacy-idle.json"},
+    {"id": "current-status-idle", "events": "events/current-status-idle.jsonl", "expected": "expected/current-status-idle.json"},
+    {"id": "delta-before-part", "events": "events/delta-before-part.jsonl", "expected": "expected/delta-before-part.json"},
+    {"id": "reasoning-and-final", "events": "events/reasoning-and-final.jsonl", "expected": "expected/reasoning-and-final.json"},
+    {"id": "multi-step-usage", "events": "events/multi-step-usage.jsonl", "expected": "expected/multi-step-usage.json"},
+    {"id": "interactive-prompts", "events": "events/interactive-prompts.jsonl", "expected": "expected/interactive-prompts.json"},
+    {"id": "unknown-event", "events": "events/unknown-event.jsonl", "expected": "expected/unknown-event.json"}
+  ]
+}

@@ -1,0 +1,6 @@
+/.bundle/
+/vendor/bundle/
+/*.log
+/.compat-evidence/
+__pycache__/
+*.pyc

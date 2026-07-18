@@ -1,0 +1,2 @@
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_text","field":"text","delta":"legacy ok"}}
+{"type":"session.idle","properties":{"sessionID":"ses_fixture"}}

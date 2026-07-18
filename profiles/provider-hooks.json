@@ -1,0 +1,11 @@
+{
+  "id": "provider-hooks",
+  "owner": "inference",
+  "required_behaviors": [
+    "provider-schema",
+    "model-routing",
+    "system-prompt-hook",
+    "session-migration-dry-run",
+    "session-migration-idempotency"
+  ]
+}

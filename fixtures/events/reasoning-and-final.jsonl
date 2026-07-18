@@ -1,0 +1,5 @@
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_reason","field":"reasoning","delta":"considering"}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_reason","messageID":"msg_assistant","sessionID":"ses_fixture","type":"reasoning","text":"considering carefully"}}}
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_text","field":"text","delta":"final answer"}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_text","messageID":"msg_assistant","sessionID":"ses_fixture","type":"text","text":"final answer"}}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}

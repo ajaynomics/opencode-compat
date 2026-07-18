@@ -1,0 +1,5 @@
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"step_1","messageID":"msg_assistant_1","sessionID":"ses_fixture","type":"step-finish","cost":0.12,"tokens":{"input":10,"output":3}}}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"step_2","messageID":"msg_assistant_2","sessionID":"ses_fixture","type":"step-finish","cost":0.34,"tokens":{"input":20,"output":7}}}}
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant_2","partID":"part_text","field":"text","delta":"two steps"}}
+{"type":"message.updated","properties":{"sessionID":"ses_fixture","info":{"id":"msg_assistant_2","role":"assistant","cost":0.34,"tokens":{"input":20,"output":7}}}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}

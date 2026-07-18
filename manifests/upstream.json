@@ -1,0 +1,9 @@
+{
+  "repository": "anomalyco/opencode",
+  "release_tag": "v1.18.3",
+  "version": "1.18.3",
+  "published_at": "2026-07-16T15:34:33Z",
+  "release_url": "https://github.com/anomalyco/opencode/releases/tag/v1.18.3",
+  "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+  "observed_at": "2026-07-18T00:00:00Z"
+}

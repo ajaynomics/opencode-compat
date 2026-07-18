@@ -1,0 +1,58 @@
+{
+  "schema_version": 1,
+  "public_ci": [
+    {
+      "id": "upstream-1.16.1",
+      "version": "1.16.1",
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "tag_provenance": "ghcr.io/anomalyco/opencode:1.16.1",
+      "consumers": ["travelwolf"],
+      "profiles": ["ruby-rest-sse", "rails-persisted-turn"],
+      "certification_status": "certified"
+    },
+    {
+      "id": "upstream-1.17.18",
+      "version": "1.17.18",
+      "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "tag_provenance": "ghcr.io/anomalyco/opencode:1.17.18",
+      "consumers": ["opencode-ajent"],
+      "profiles": ["plugin-ledger", "ruby-rest-sse"],
+      "certification_status": "certified"
+    },
+    {
+      "id": "upstream-1.18.3",
+      "version": "1.18.3",
+      "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "tag_provenance": "ghcr.io/anomalyco/opencode:1.18.3",
+      "consumers": ["ajent-rails"],
+      "profiles": ["ruby-rest-sse", "rails-persisted-turn", "plugin-ledger"],
+      "certification_status": "certified"
+    }
+  ],
+  "host_canary": [
+    {
+      "id": "ajent-blackline-live",
+      "consumer": "ajent-rails",
+      "registry_ref": "docker-registry:5000/opencode-blackline:83eed3c247a352842b08fc5cf339c4d0acdaacba",
+      "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
+      "reported_version": "1.18.3",
+      "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "profiles": ["ruby-rest-sse", "rails-persisted-turn", "plugin-ledger"],
+      "certification_status": "candidate-certified",
+      "certified_candidate": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+      "certified_at": "2026-07-18T20:34:10Z"
+    },
+    {
+      "id": "mushu-permission-shortcuts-live",
+      "consumer": "mushu",
+      "registry_ref": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+      "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+      "reported_version": "0.0.0-permission-shortcuts-202606300721",
+      "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+      "profiles": ["ruby-rest-sse"],
+      "certification_status": "candidate-certified",
+      "certified_candidate": "8adc95985a79b16e6e4bc0c0f827d638f244d509",
+      "certified_at": "2026-07-18T20:34:08Z"
+    }
+  ]
+}

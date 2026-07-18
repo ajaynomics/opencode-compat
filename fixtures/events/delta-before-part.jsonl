@@ -1,0 +1,3 @@
+{"type":"message.part.delta","properties":{"sessionID":"ses_fixture","messageID":"msg_assistant","partID":"part_tail","field":"text","delta":"tail dro"}}
+{"type":"message.part.updated","properties":{"sessionID":"ses_fixture","part":{"id":"part_tail","messageID":"msg_assistant","sessionID":"ses_fixture","type":"text","text":"tail drop recovered"}}}
+{"type":"session.status","properties":{"sessionID":"ses_fixture","status":{"type":"idle"}}}
