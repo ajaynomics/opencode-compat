@@ -1,6 +1,8 @@
 {
   "id": "ruby-rest-sse",
   "owner": "opencode-ruby",
+  "certification_mode": "shared-ruby-fixture-and-live-probe",
+  "shared_ruby_probe_sufficient": true,
   "required_fixtures": [
     "legacy-idle",
     "current-status-idle",

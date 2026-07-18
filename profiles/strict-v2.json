@@ -1,6 +1,8 @@
 {
   "id": "strict-v2",
   "owner": "leela",
+  "certification_mode": "executable-consumer-attestation",
+  "shared_ruby_probe_sufficient": false,
   "required_behaviors": [
     "exact-upstream-version-and-commit",
     "bun-toolchain-provenance",

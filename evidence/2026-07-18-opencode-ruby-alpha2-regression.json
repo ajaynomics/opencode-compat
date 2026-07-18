@@ -36,7 +36,9 @@
     },
     {
       "target": "ajent-production-artifact",
-      "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
+      "consumer_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808",
+      "product": "blackline",
+      "docker_image_id": "sha256:af479243e6ccf1206f57dffd13b8e9d2c028de401cccc954bcc2f00940274c60",
       "server_version": "1.18.3",
       "status": "fail"
     },
@@ -47,5 +49,38 @@
       "status": "fail"
     }
   ],
-  "promotion_effect": "The observed alpha2 consumer baselines are not eligible for certified previous tuples. A distinct, tested rollback consumer commit pinned to alpha7 is required before the two-certified-tuples policy can be satisfied."
+  "observed_ajent_production_runtime": {
+    "consumer_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808",
+    "upstream_base_layer_match": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+    "shared_accessory": {
+      "product": "blackline",
+      "tag_provenance": "docker-registry:5000/opencode-blackline:8d8550265dca0ac06a41d5427c585ede56bbb808",
+      "docker_image_id": "sha256:af479243e6ccf1206f57dffd13b8e9d2c028de401cccc954bcc2f00940274c60"
+    },
+    "deployed_per_user_product_configuration": {
+      "strategy": "mutable-latest",
+      "status": "observed-configuration-drift-failure",
+      "references": {
+        "aigl": "docker-registry:5000/opencode-aigl:latest",
+        "blackline": "docker-registry:5000/opencode-blackline:latest",
+        "raven": "docker-registry:5000/opencode-raven:latest"
+      }
+    },
+    "ci_built_sha_artifacts": {
+      "aigl": {
+        "tag_provenance": "docker-registry:5000/opencode-aigl:8d8550265dca0ac06a41d5427c585ede56bbb808",
+        "docker_image_id": "sha256:72c454f39d423618b75439122c9073dbba7c9071421e5f3abd12cf288dc1f898"
+      },
+      "blackline": {
+        "tag_provenance": "docker-registry:5000/opencode-blackline:8d8550265dca0ac06a41d5427c585ede56bbb808",
+        "docker_image_id": "sha256:af479243e6ccf1206f57dffd13b8e9d2c028de401cccc954bcc2f00940274c60"
+      },
+      "raven": {
+        "tag_provenance": "docker-registry:5000/opencode-raven:8d8550265dca0ac06a41d5427c585ede56bbb808",
+        "docker_image_id": "sha256:6c4da94a8dec6160f0b1b4d0e2cd9ff38a3faa18dbd2a8d6023a71f6416a544c"
+      }
+    },
+    "scope_note": "The hardened alpha2 contract was rerun against the exact shared Blackline accessory. The three SHA-tagged image IDs are CI artifact provenance, not evidence that the deployed per-user ProductConfig selected them; it selected mutable latest references."
+  },
+  "promotion_effect": "The observed alpha2 consumer baselines are not eligible for certified previous tuples. After a real main/deploy/post-merge canary, an explicitly acknowledged bootstrap may certify current while leaving previous null and retaining alpha2 only as failed emergency provenance; the next meaningful passing release creates the first certified previous tuple."
 }

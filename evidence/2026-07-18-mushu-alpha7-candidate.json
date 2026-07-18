@@ -2,16 +2,88 @@
   "schema_version": 1,
   "consumer": "mushu",
   "profile": "ruby-rest-sse",
-  "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
+  "consumer_commit": "7cff22788b36ae703f6b1b8fa39b52d6dbafe7e0",
+  "consumer_tree": "762eb8dcc7042a52cd240ca69acdb9cb45150a84",
+  "consumer_ref_kind": "pull-request-head",
+  "review_url": "https://gitea.ajay.to/ajaynomics/mushu/pulls/1",
+  "certification_scope": "pre-merge-pr-head-candidate-only",
+  "promotion_eligible": false,
   "status": "pass",
-  "certified_at": "2026-07-18T22:03:14Z",
-  "tuple_sha256": "sha256:6171647c7db6d88d52882695c6106a4391e87d0bb1f9e0c48151b2bc1e95b318",
+  "certified_at": "2026-07-18T23:26:06.865190Z",
+  "tuple_sha256": "sha256:648d53b1d800c065e8ecdb95974049ee179617569170cfc169c31c3bfc1e8865",
   "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
-  "canary": {
-    "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
-    "checked_at": "2026-07-18T21:53:00Z",
-    "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
-    "persisted_final_text": "compat-ok",
-    "model_request_count": 1
+  "loaded_source": {
+    "gem": "opencode-ruby",
+    "version": "0.0.1.alpha7",
+    "source_class": "Bundler::Source::Git",
+    "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+    "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+    "observed_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+    "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+    "loaded_file_within_spec": true,
+    "proof_test": "test/services/mushu/runtime/opencode_dependency_provenance_test.rb",
+    "status": "pass"
+  },
+  "deterministic_contract": {
+    "checked_at": "2026-07-18T23:23:41Z",
+    "image": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+    "expected_text": "compat-ok",
+    "full_text": "compat-ok",
+    "authoritative_assistant_count": 1,
+    "model_request_count": 1,
+    "status": "pass"
+  },
+  "application_canary": {
+    "checked_at": "2026-07-18T23:26:06.865190Z",
+    "response_text": "compat-ok",
+    "authoritative_final_text": "compat-ok",
+    "message_roles": [
+      "user",
+      "assistant"
+    ],
+    "authoritative_assistant_count": 1,
+    "provider_request_count": 1,
+    "mapping_and_last_turn_persisted": true,
+    "active_claim_cleared": true,
+    "opencode_session_deleted": true,
+    "synthetic_database_rows_after_cleanup": 0,
+    "status": "pass"
+  },
+  "consumer_verification": {
+    "focused_tests": {
+      "runs": 126,
+      "assertions": 1413,
+      "failures": 0,
+      "errors": 0
+    },
+    "full_tests": {
+      "runs": 632,
+      "assertions": 9013,
+      "failures": 0,
+      "errors": 0
+    },
+    "rubocop": {
+      "files": 216,
+      "offenses": 0
+    },
+    "gitea_actions": {
+      "run_id": 2544,
+      "url": "https://gitea.ajay.to/ajaynomics/mushu/actions/runs/2544",
+      "overall_status": "failure",
+      "commit": "7cff22788b36ae703f6b1b8fa39b52d6dbafe7e0",
+      "classification": "inherited-unrelated-baseline-failures",
+      "jobs": {
+        "lint": "success",
+        "scan_js": "success",
+        "scan_ruby": "inherited-vendor-bundle-source-scan-failure",
+        "test": "inherited-evidence-report-single-failure",
+        "system-test": "inherited-missing-test-system-directory"
+      },
+      "baseline_run_id": 2508
+    },
+    "remotes_exact": [
+      "origin",
+      "backup"
+    ]
   }
 }

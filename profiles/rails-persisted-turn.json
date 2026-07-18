@@ -1,6 +1,8 @@
 {
   "id": "rails-persisted-turn",
   "owner": "opencode-rails",
+  "certification_mode": "executable-consumer-attestation",
+  "shared_ruby_probe_sufficient": false,
   "extends": ["ruby-rest-sse"],
   "required_behaviors": [
     "session-recovery",

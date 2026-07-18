@@ -18,6 +18,7 @@ class RuntimeTuplePromoterTest < Minitest::Test
   CANDIDATE_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'b' * 64}"
   CURRENT_TIME = "2026-07-17T12:00:00Z"
   CANDIDATE_TIME = "2026-07-18T12:00:00Z"
+  CANDIDATE_TREE = "7" * 40
 
   def setup
     @root = Dir.mktmpdir("opencode-compat-promotion")
@@ -25,6 +26,7 @@ class RuntimeTuplePromoterTest < Minitest::Test
     FileUtils.mkdir_p(File.join(@root, "evidence"))
     FileUtils.mkdir_p(File.join(@root, "profiles"))
     File.write(File.join(@root, "profiles", "rails-persisted-turn.json"), "{}\n")
+    write_post_merge_canary_evidence("post-merge-canary.json", CANDIDATE_COMMIT)
     write_manifest(valid_manifest)
     @promoter = OpenCodeCompat::RuntimeTuplePromoter.new(root: @root)
   end
@@ -175,6 +177,154 @@ class RuntimeTuplePromoterTest < Minitest::Test
     assert_equal before, File.binread(manifest_path)
   end
 
+  def test_rejects_pre_merge_pull_request_evidence_as_candidate_only
+    manifest = valid_manifest
+    candidate = manifest.dig("consumers", CONSUMER, "candidate")
+    candidate["certification_scope"] = "pre-merge-pr-head-candidate-only"
+    candidate["promotion_eligible"] = false
+    candidate["consumer_ref"] = {
+      "kind" => "pull-request-head",
+      "repository" => "example/consumer",
+      "commit" => CANDIDATE_COMMIT,
+      "tree" => CANDIDATE_TREE,
+      "base_commit" => CURRENT_COMMIT,
+      "review_url" => "https://example.test/pulls/1"
+    }
+    candidate.delete("promotion_provenance")
+    write_manifest(manifest)
+    candidate_evidence, previous_evidence = write_matching_evidence
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.promote(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: certification(CANDIDATE_TIME, candidate_evidence),
+        previous_certification: certification(CURRENT_TIME, previous_evidence),
+        dry_run: true
+      )
+    end
+
+    assert_match(/pre-merge pull-request evidence is candidate-only/, error.message)
+  end
+
+  def test_accepts_explicit_identical_tree_attestation_with_post_merge_canary
+    manifest = valid_manifest
+    candidate = manifest.dig("consumers", CONSUMER, "candidate")
+    candidate["consumer_ref"] = {
+      "kind" => "pull-request-head",
+      "repository" => "example/consumer",
+      "commit" => CANDIDATE_COMMIT,
+      "tree" => CANDIDATE_TREE,
+      "base_commit" => CURRENT_COMMIT,
+      "review_url" => "https://example.test/pulls/1"
+    }
+    main_commit = "8" * 40
+    write_post_merge_canary_evidence("post-merge-attested-canary.json", main_commit)
+    candidate["promotion_provenance"] = {
+      "kind" => "identical-tree-attestation",
+      "pull_request_commit" => CANDIDATE_COMMIT,
+      "pull_request_tree" => CANDIDATE_TREE,
+      "main_commit" => main_commit,
+      "main_tree" => CANDIDATE_TREE,
+      "attested_at" => CANDIDATE_TIME,
+      "post_merge_canary" => {
+        "status" => "pass",
+        "checked_at" => CANDIDATE_TIME,
+        "evidence" => ["evidence/post-merge-attested-canary.json"]
+      }
+    }
+    write_manifest(manifest)
+    candidate_evidence, previous_evidence = write_matching_evidence
+
+    promoted = @promoter.promote(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, candidate_evidence),
+      previous_certification: certification(CURRENT_TIME, previous_evidence),
+      dry_run: true
+    )
+
+    assert_equal "certified", promoted.dig("consumers", CONSUMER, "current", "status")
+  end
+
+  def test_main_commit_promotion_still_requires_a_post_merge_canary
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "candidate", "promotion_provenance").delete("post_merge_canary")
+    write_manifest(manifest)
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.promote(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: {},
+        dry_run: true
+      )
+    end
+
+    assert_match(/passing post-merge canary/, error.message)
+  end
+
+  def test_rejects_candidate_without_loaded_exact_ref_source_proof
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "candidate", "opencode_ruby").delete("source")
+    write_manifest(manifest)
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.fingerprints(consumer: CONSUMER, consumer_commit: CANDIDATE_COMMIT)
+    end
+
+    assert_match(/loaded exact-ref source proof/, error.message)
+  end
+
+  def test_explicit_degraded_bootstrap_certifies_current_without_faking_previous
+    manifest = valid_manifest
+    failed = manifest.dig("consumers", CONSUMER, "current")
+    failed["status"] = "observed-production-contract-failed"
+    write_manifest(manifest)
+    fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    evidence = write_evidence(
+      "bootstrap-candidate.json",
+      commit: CANDIDATE_COMMIT,
+      timestamp: CANDIDATE_TIME,
+      fingerprint: fingerprint
+    )
+
+    bootstrapped = @promoter.bootstrap_current(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, evidence),
+      acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT,
+      dry_run: true
+    )
+
+    consumer = bootstrapped.dig("consumers", CONSUMER)
+    assert_equal "certified", consumer.dig("current", "status")
+    assert_equal CANDIDATE_COMMIT, consumer.dig("current", "consumer_commit")
+    assert_nil consumer["candidate"]
+    assert_nil consumer["previous"]
+    assert_equal "observed-production-contract-failed", consumer.dig("emergency_provenance", "status")
+    assert_nil consumer.dig("emergency_provenance", "certification")
+    assert_equal "degraded-no-certified-previous", consumer.dig("rollback_state", "status")
+    assert_equal "bootstrap-current-only", bootstrapped.fetch("migration_state")
+  end
+
+  def test_degraded_bootstrap_requires_exact_explicit_acknowledgement
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.bootstrap_current(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: {},
+        acknowledgement: "yes",
+        dry_run: true
+      )
+    end
+
+    assert_match(/explicit acknowledgement/, error.message)
+  end
+
   def test_rejects_evidence_that_does_not_match_the_complete_tuple
     candidate, previous = write_matching_evidence
     manifest = JSON.parse(File.read(manifest_path))
@@ -254,7 +404,7 @@ class RuntimeTuplePromoterTest < Minitest::Test
 
   def valid_manifest
     {
-      "schema_version" => 1,
+      "schema_version" => 2,
       "migration_state" => "candidate",
       "consumers" => {
         CONSUMER => {
@@ -269,11 +419,49 @@ class RuntimeTuplePromoterTest < Minitest::Test
           "candidate" => {
             "status" => "compatibility-certified",
             "certified_at" => "2026-07-18T10:00:00Z",
-            "opencode_ruby" => {"version" => "0.0.1.alpha7", "git_commit" => RUBY_CANDIDATE},
-            "opencode_rails" => {"version" => "0.0.1.alpha7", "git_commit" => RAILS_CANDIDATE},
+            "certification_scope" => "promotion-deployed",
+            "promotion_eligible" => true,
+            "consumer_ref" => {
+              "kind" => "main-commit",
+              "repository" => "example/consumer",
+              "commit" => CANDIDATE_COMMIT,
+              "tree" => CANDIDATE_TREE
+            },
+            "promotion_provenance" => {
+              "kind" => "main-commit",
+              "main_commit" => CANDIDATE_COMMIT,
+              "post_merge_canary" => {
+                "status" => "pass",
+                "checked_at" => CANDIDATE_TIME,
+                "evidence" => ["evidence/post-merge-canary.json"]
+              }
+            },
+            "opencode_ruby" => client("0.0.1.alpha7", RUBY_CANDIDATE),
+            "opencode_rails" => client("0.0.1.alpha7", RAILS_CANDIDATE),
             "runtime" => {"image" => CANDIDATE_IMAGE, "reported_version" => "1.18.3"}
           },
           "previous" => nil
+        }
+      }
+    }
+  end
+
+  def client(version, commit)
+    {
+      "version" => version,
+      "git_commit" => commit,
+      "source" => {
+        "type" => "git",
+        "uri" => "https://example.test/client.git",
+        "requested_ref" => commit,
+        "locked_revision" => commit,
+        "loaded_source_proof" => {
+          "status" => "pass",
+          "source_class" => "Bundler::Source::Git",
+          "loaded_version" => version,
+          "observed_ref" => commit,
+          "observed_revision" => commit,
+          "test" => "test/dependency_provenance_test.rb"
         }
       }
     }
@@ -309,6 +497,16 @@ class RuntimeTuplePromoterTest < Minitest::Test
     }
     File.write(File.join(@root, path), JSON.pretty_generate(document) + "\n")
     {"path" => path, "tuple_sha256" => fingerprint}
+  end
+
+  def write_post_merge_canary_evidence(name, commit)
+    document = {
+      "schema_version" => 1,
+      "status" => "pass",
+      "checked_at" => CANDIDATE_TIME,
+      "consumer_commit" => commit
+    }
+    File.write(File.join(@root, "evidence", name), JSON.pretty_generate(document) + "\n")
   end
 
   def certification(timestamp, evidence)

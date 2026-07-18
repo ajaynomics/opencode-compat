@@ -1,6 +1,8 @@
 {
   "id": "plugin-ledger",
   "owner": "opencode-ajent",
+  "certification_mode": "executable-consumer-attestation",
+  "shared_ruby_probe_sufficient": false,
   "required_behaviors": [
     "exact-upstream-image",
     "exact-plugin-version",

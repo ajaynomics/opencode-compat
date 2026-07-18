@@ -1,18 +1,19 @@
 {
-  "schema_version": 1,
+  "$schema": "../schemas/runtime-tuples.schema.json",
+  "schema_version": 2,
   "migration_state": "candidate",
   "promotion_readiness": {
     "status": "blocked",
-    "reason": "Every observed alpha2 baseline fails the hardened exact-final-text contract, so none can be certified as the previous rollback tuple.",
+    "reason": "Every observed alpha2 baseline fails the hardened exact-final-text contract, so none can be certified as the previous rollback tuple; the passing evidence is also bound to unmerged pull-request heads.",
     "evidence": "evidence/2026-07-18-opencode-ruby-alpha2-regression.json",
-    "required_action": "Create and canary a distinct rollback consumer commit that pins alpha7 and the exact runtime before promoting any candidate."
+    "required_action": "Merge, deploy, and canary the exact main/merge tuple (or record an identical-tree attestation plus post-merge canary), then explicitly acknowledge bootstrap-current-only; previous remains null until the next meaningful independently passing release."
   },
   "consumers": {
     "ajent-rails": {
       "profile": "rails-persisted-turn",
       "current": {
         "status": "observed-production-contract-failed",
-        "consumer_commit": "83eed3c247a352842b08fc5cf339c4d0acdaacba",
+        "consumer_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808",
         "opencode_ruby": {
           "version": "0.0.1.alpha2",
           "git_commit": "889d38332f98f5f7b76d16952b7204d8a5b9a662"
@@ -22,21 +23,83 @@
           "git_commit": "9b0c4cd3cd31bdfebbb89567daca012d68a356ea"
         },
         "runtime": {
-          "tag_provenance": "docker-registry:5000/opencode-blackline:83eed3c247a352842b08fc5cf339c4d0acdaacba",
-          "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
+          "tag_provenance": "docker-registry:5000/opencode-blackline:8d8550265dca0ac06a41d5427c585ede56bbb808",
+          "docker_image_id": "sha256:af479243e6ccf1206f57dffd13b8e9d2c028de401cccc954bcc2f00940274c60",
+          "source_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808",
           "reported_version": "1.18.3",
-          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+          "upstream_base_proof": {
+            "method": "rootfs-prefix-layer-match",
+            "matched_layer_count": 4,
+            "status": "pass",
+            "note": "The deployed images match the exact 1.18.3 base layers even though this main commit selected the mutable upstream tag at build time."
+          },
+          "deployed_product_selection": {
+            "strategy": "mutable-latest",
+            "status": "observed-configuration-drift-failure",
+            "references": {
+              "aigl": "docker-registry:5000/opencode-aigl:latest",
+              "blackline": "docker-registry:5000/opencode-blackline:latest",
+              "raven": "docker-registry:5000/opencode-raven:latest"
+            },
+            "note": "The shared Blackline accessory used the SHA tag above, but Rails ProductConfig resolved per-user AIGL, Blackline, and Raven containers through mutable latest references."
+          },
+          "ci_built_product_images": {
+            "aigl": {
+              "tag_provenance": "docker-registry:5000/opencode-aigl:8d8550265dca0ac06a41d5427c585ede56bbb808",
+              "docker_image_id": "sha256:72c454f39d423618b75439122c9073dbba7c9071421e5f3abd12cf288dc1f898",
+              "source_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808"
+            },
+            "blackline": {
+              "tag_provenance": "docker-registry:5000/opencode-blackline:8d8550265dca0ac06a41d5427c585ede56bbb808",
+              "docker_image_id": "sha256:af479243e6ccf1206f57dffd13b8e9d2c028de401cccc954bcc2f00940274c60",
+              "source_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808"
+            },
+            "raven": {
+              "tag_provenance": "docker-registry:5000/opencode-raven:8d8550265dca0ac06a41d5427c585ede56bbb808",
+              "docker_image_id": "sha256:6c4da94a8dec6160f0b1b4d0e2cd9ff38a3faa18dbd2a8d6023a71f6416a544c",
+              "source_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808"
+            }
+          }
         }
       },
       "candidate": {
         "status": "compatibility-certified",
-        "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+        "certification_scope": "pre-merge-pr-head-candidate-only",
+        "promotion_eligible": false,
+        "promotion_blockers": [
+          "consumer-ref-is-an-unmerged-pull-request-head",
+          "aigl-and-raven-candidate-content-artifacts-have-not-been-built-and-canaried",
+          "no-certified-previous-tuple"
+        ],
+        "consumer_commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+        "consumer_ref": {
+          "kind": "pull-request-head",
+          "repository": "ajaynomics/ajent-rails",
+          "commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+          "tree": "9e93834ad16b60fa5edfe1cb3baaba193402be74",
+          "base_commit": "8d8550265dca0ac06a41d5427c585ede56bbb808",
+          "review_url": "https://gitea.ajay.to/ajaynomics/ajent-rails/pulls/946"
+        },
         "opencode_ruby": {
           "version": "0.0.1.alpha7",
           "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
           "tag_provenance": {
             "tag": "v0.0.1.alpha7",
             "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
+          },
+          "source": {
+            "type": "git",
+            "uri": "https://gitea.krishnan.ca/ajaynomics/opencode-ruby.git",
+            "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "loaded_source_proof": {
+              "status": "pass",
+              "source_class": "Bundler::Source::Git",
+              "loaded_version": "0.0.1.alpha7",
+              "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+              "test": "test/lib/opencode/runtime_image_provenance_test.rb"
+            }
           }
         },
         "opencode_rails": {
@@ -45,23 +108,61 @@
           "tag_provenance": {
             "tag": "v0.0.1.alpha7",
             "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c"
+          },
+          "source": {
+            "type": "git",
+            "uri": "https://gitea.krishnan.ca/ajaynomics/opencode-rails.git",
+            "requested_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+            "locked_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+            "loaded_source_proof": {
+              "status": "pass",
+              "source_class": "Bundler::Source::Git",
+              "loaded_version": "0.0.1.alpha7",
+              "observed_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+              "test": "test/lib/opencode/runtime_image_provenance_test.rb"
+            }
           }
         },
         "runtime": {
-          "tag_provenance": "ajent-opencode-blackline-canary:96552893",
-          "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
-          "source_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
           "reported_version": "1.18.3",
-          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+          "product_selection": {
+            "strategy": "full-consumer-commit-tag",
+            "source_commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+            "references": {
+              "aigl": "docker-registry:5000/opencode-aigl:01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+              "blackline": "docker-registry:5000/opencode-blackline:01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+              "raven": "docker-registry:5000/opencode-raven:01cdf9da8e1b3f9a205d681e448aefefd9704db2"
+            }
+          },
+          "product_images": {
+            "blackline": {
+              "tag_provenance": "ajent-opencode-blackline-canary:01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+              "docker_image_id": "sha256:075cb49ac7fcb1f8972e051dff96d655fa0d0d911d83a523a6abf03a5e2e2935",
+              "source_commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2"
+            }
+          }
         },
-        "application_canary": {
-          "checked_at": "2026-07-18T21:58:00Z",
-          "path": "Blackline::GenerateResponseJob",
-          "persisted_final_text": "compat-ok",
+        "deterministic_contract": {
+          "checked_at": "2026-07-18T23:16:13Z",
+          "docker_image_id": "sha256:075cb49ac7fcb1f8972e051dff96d655fa0d0d911d83a523a6abf03a5e2e2935",
+          "expected_text": "compat-ok",
+          "full_text": "compat-ok",
+          "authoritative_assistant_count": 1,
           "model_request_count": 1,
           "status": "pass"
         },
-        "certified_at": "2026-07-18T22:03:14Z"
+        "application_canary": {
+          "checked_at": "2026-07-18T23:28:16.435369Z",
+          "path": "Blackline::GenerateResponseJob",
+          "persisted_final_text": "compat-ok",
+          "authoritative_final_text": "compat-ok",
+          "authoritative_assistant_count": 1,
+          "model_request_count": 1,
+          "cleanup_status": "pass",
+          "status": "pass"
+        },
+        "certified_at": "2026-07-18T23:28:16.435369Z"
       },
       "previous": null
     },
@@ -85,13 +186,41 @@
       },
       "candidate": {
         "status": "compatibility-certified",
-        "consumer_commit": "19747b59fa21e12560afd9edd73ed674ab3a644c",
+        "certification_scope": "pre-merge-pr-head-candidate-only",
+        "promotion_eligible": false,
+        "promotion_blockers": [
+          "consumer-ref-is-an-unmerged-pull-request-head",
+          "no-certified-previous-tuple"
+        ],
+        "consumer_commit": "b9a2c2dd361a6b2ea547cc67ee817b8eb4ce31e8",
+        "consumer_ref": {
+          "kind": "pull-request-head",
+          "repository": "ajaynomics/travelwolf",
+          "commit": "b9a2c2dd361a6b2ea547cc67ee817b8eb4ce31e8",
+          "tree": "8b3f8a97dc1f1d8b558a49523bf312d2810422df",
+          "base_commit": "75c92ed5248996e5278ac9a3351cc4eaf03df820",
+          "review_url": "https://gitea.ajay.to/ajaynomics/travelwolf/pulls/29"
+        },
         "opencode_ruby": {
           "version": "0.0.1.alpha7",
           "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
           "tag_provenance": {
             "tag": "v0.0.1.alpha7",
             "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
+          },
+          "source": {
+            "type": "git",
+            "uri": "https://gitea.krishnan.ca/ajaynomics/opencode-ruby.git",
+            "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "loaded_source_proof": {
+              "status": "pass",
+              "source_class": "Bundler::Source::Git",
+              "loaded_version": "0.0.1.alpha7",
+              "observed_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+              "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+              "test": "test/services/travelwolf/opencode_env_wiring_test.rb"
+            }
           }
         },
         "opencode_rails": {
@@ -100,22 +229,52 @@
           "tag_provenance": {
             "tag": "v0.0.1.alpha7",
             "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c"
+          },
+          "source": {
+            "type": "git",
+            "uri": "https://gitea.krishnan.ca/ajaynomics/opencode-rails.git",
+            "requested_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+            "locked_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+            "loaded_source_proof": {
+              "status": "pass",
+              "source_class": "Bundler::Source::Git",
+              "loaded_version": "0.0.1.alpha7",
+              "observed_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+              "observed_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+              "test": "test/services/travelwolf/opencode_env_wiring_test.rb"
+            }
           }
         },
         "runtime": {
           "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
           "reported_version": "1.16.1"
         },
+        "deterministic_contract": {
+          "evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
+          "checked_at": "2026-07-18T23:23:03Z",
+          "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+          "opencode_ruby_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+          "expected_text": "compat-ok",
+          "full_text": "compat-ok",
+          "authoritative_assistant_count": 1,
+          "model_request_count": 1,
+          "status": "pass"
+        },
         "application_canary": {
-          "run_id": "20260718215135-8d8102c0",
-          "checked_at": "2026-07-18T21:51:56.552Z",
-          "final_text": "TRAVELWOLF_ALPHA7_SUBSCRIBE_READY",
-          "application_prompt_count": 1,
-          "model_request_count_observed": false,
+          "run_id": "travelwolf-alpha7-ref-20260718T232211Z-48eadf",
+          "checked_at": "2026-07-18T23:22:26.216140Z",
+          "final_text": "TRAVELWOLF_ALPHA7_REF_PIN_READY",
+          "subscription_ready_before_prompt": true,
+          "opencode_api_prompt_count": 1,
+          "provider_request_count_observed": false,
+          "message_roles": [
+            "user",
+            "assistant"
+          ],
           "cleanup_status": "pass",
           "status": "pass"
         },
-        "certified_at": "2026-07-18T22:03:14Z"
+        "certified_at": "2026-07-18T23:35:57Z"
       },
       "previous": null
     },
@@ -130,36 +289,87 @@
         },
         "runtime": {
           "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+          "image": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
           "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
           "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+          "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
           "reported_version": "0.0.0-permission-shortcuts-202606300721"
         }
       },
       "candidate": {
         "status": "compatibility-certified",
-        "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
+        "certification_scope": "pre-merge-pr-head-candidate-only",
+        "promotion_eligible": false,
+        "promotion_blockers": [
+          "consumer-ref-is-an-unmerged-pull-request-head",
+          "no-certified-previous-tuple"
+        ],
+        "consumer_commit": "7cff22788b36ae703f6b1b8fa39b52d6dbafe7e0",
+        "consumer_ref": {
+          "kind": "pull-request-head",
+          "repository": "ajaynomics/mushu",
+          "commit": "7cff22788b36ae703f6b1b8fa39b52d6dbafe7e0",
+          "tree": "762eb8dcc7042a52cd240ca69acdb9cb45150a84",
+          "base_commit": "fe16e5bab028e3c92cd5508ef2cebd9bfa23386f",
+          "review_url": "https://gitea.ajay.to/ajaynomics/mushu/pulls/1"
+        },
         "opencode_ruby": {
           "version": "0.0.1.alpha7",
           "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
           "tag_provenance": {
             "tag": "v0.0.1.alpha7",
             "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
+          },
+          "source": {
+            "type": "git",
+            "uri": "https://gitea.krishnan.ca/ajaynomics/opencode-ruby.git",
+            "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+            "loaded_source_proof": {
+              "status": "pass",
+              "source_class": "Bundler::Source::Git",
+              "loaded_version": "0.0.1.alpha7",
+              "observed_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+              "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+              "loaded_file_within_spec": true,
+              "test": "test/services/mushu/runtime/opencode_dependency_provenance_test.rb"
+            }
           }
         },
         "runtime": {
           "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+          "image": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
           "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
           "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+          "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
           "reported_version": "0.0.0-permission-shortcuts-202606300721"
         },
-        "application_canary": {
-          "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
-          "checked_at": "2026-07-18T21:53:00Z",
-          "persisted_final_text": "compat-ok",
+        "deterministic_contract": {
+          "checked_at": "2026-07-18T23:23:41Z",
+          "image": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+          "expected_text": "compat-ok",
+          "full_text": "compat-ok",
+          "authoritative_assistant_count": 1,
           "model_request_count": 1,
           "status": "pass"
         },
-        "certified_at": "2026-07-18T22:03:14Z"
+        "application_canary": {
+          "checked_at": "2026-07-18T23:26:06.865190Z",
+          "response_text": "compat-ok",
+          "authoritative_final_text": "compat-ok",
+          "message_roles": [
+            "user",
+            "assistant"
+          ],
+          "authoritative_assistant_count": 1,
+          "provider_request_count": 1,
+          "mapping_and_last_turn_persisted": true,
+          "active_claim_cleared": true,
+          "opencode_session_deleted": true,
+          "synthetic_database_rows_after_cleanup": 0,
+          "status": "pass"
+        },
+        "certified_at": "2026-07-18T23:26:06.865190Z"
       },
       "previous": null
     }

@@ -12,7 +12,7 @@ class RepositoryTest < Minitest::Test
   end
 
   def test_every_json_document_parses
-    paths = Dir.glob(File.join(ROOT, "{evidence,fixtures,manifests,profiles}/**/*.json"))
+    paths = Dir.glob(File.join(ROOT, "{evidence,fixtures,manifests,profiles,schemas}/**/*.json"))
     refute_empty paths
     paths.each { |path| JSON.parse(File.read(path)) }
   end
@@ -33,6 +33,19 @@ class RepositoryTest < Minitest::Test
     Dir.glob(File.join(ROOT, "profiles/*.json")).each do |path|
       profile = JSON.parse(File.read(path))
       Array(profile["required_fixtures"]).each { |id| assert_includes fixture_ids, id }
+    end
+  end
+
+  def test_only_ruby_rest_sse_can_be_certified_by_the_shared_ruby_probe
+    Dir.glob(File.join(ROOT, "profiles/*.json")).each do |path|
+      profile = JSON.parse(File.read(path))
+      if profile.fetch("id") == "ruby-rest-sse"
+        assert_equal "shared-ruby-fixture-and-live-probe", profile.fetch("certification_mode")
+        assert_equal true, profile.fetch("shared_ruby_probe_sufficient")
+      else
+        assert_equal "executable-consumer-attestation", profile.fetch("certification_mode")
+        assert_equal false, profile.fetch("shared_ruby_probe_sufficient")
+      end
     end
   end
 
@@ -78,6 +91,10 @@ class RepositoryTest < Minitest::Test
 
   def test_runtime_tuple_profiles_exist
     tuples = json("manifests/runtime-tuples.json")
+    schema = json("schemas/runtime-tuples.schema.json")
+
+    assert_equal 2, tuples.fetch("schema_version")
+    assert_equal 2, schema.dig("properties", "schema_version", "const")
     tuples.fetch("consumers").each_value do |consumer|
       profile = consumer.fetch("profile")
       assert_path_exists File.join(ROOT, "profiles", "#{profile}.json")
@@ -120,6 +137,96 @@ class RepositoryTest < Minitest::Test
     end
   end
 
+  def test_pull_request_heads_are_explicitly_candidate_only
+    tuples = json("manifests/runtime-tuples.json")
+
+    tuples.fetch("consumers").each do |name, consumer|
+      candidate = consumer.fetch("candidate")
+      reference = candidate.fetch("consumer_ref")
+
+      assert_equal "pre-merge-pr-head-candidate-only", candidate.fetch("certification_scope"), name
+      assert_equal false, candidate.fetch("promotion_eligible"), name
+      assert_equal "pull-request-head", reference.fetch("kind"), name
+      assert_equal candidate.fetch("consumer_commit"), reference.fetch("commit"), name
+      assert_match(/\A[0-9a-f]{40}\z/, reference.fetch("tree"), name)
+      assert_match(%r{\Ahttps://.+/pulls/\d+\z}, reference.fetch("review_url"), name)
+    end
+  end
+
+  def test_candidate_gems_use_peeled_refs_and_loaded_source_proof
+    tuples = json("manifests/runtime-tuples.json")
+
+    tuples.fetch("consumers").each do |consumer_name, consumer|
+      candidate = consumer.fetch("candidate")
+      %w[opencode_ruby opencode_rails].each do |client_name|
+        client = candidate[client_name]
+        next unless client
+
+        commit = client.fetch("git_commit")
+        source = client.fetch("source")
+        proof = source.fetch("loaded_source_proof")
+
+        assert_equal "git", source.fetch("type"), "#{consumer_name} #{client_name}"
+        assert_equal commit, source.fetch("requested_ref"), "#{consumer_name} #{client_name}"
+        assert_equal commit, source.fetch("locked_revision"), "#{consumer_name} #{client_name}"
+        assert_equal "pass", proof.fetch("status"), "#{consumer_name} #{client_name}"
+        assert_equal "Bundler::Source::Git", proof.fetch("source_class"), "#{consumer_name} #{client_name}"
+        assert_equal client.fetch("version"), proof.fetch("loaded_version"), "#{consumer_name} #{client_name}"
+        assert_equal commit, proof.fetch("observed_ref"), "#{consumer_name} #{client_name}" if proof.key?("observed_ref")
+        assert_equal commit, proof.fetch("observed_revision"), "#{consumer_name} #{client_name}"
+        refute_empty proof.fetch("test"), "#{consumer_name} #{client_name}"
+      end
+    end
+  end
+
+  def test_ajent_records_current_selection_drift_and_exact_candidate_selection
+    ajent = json("manifests/runtime-tuples.json").fetch("consumers").fetch("ajent-rails")
+    expected_products = %w[aigl blackline raven]
+
+    current_runtime = ajent.fetch("current").fetch("runtime")
+    assert_match(/\Asha256:[0-9a-f]{64}\z/, current_runtime.fetch("docker_image_id"))
+    deployed = current_runtime.fetch("deployed_product_selection")
+    assert_equal "mutable-latest", deployed.fetch("strategy")
+    assert_equal "observed-configuration-drift-failure", deployed.fetch("status")
+    assert_equal expected_products, deployed.fetch("references").keys.sort
+    deployed.fetch("references").each_value { |reference| assert reference.end_with?(":latest") }
+
+    built = current_runtime.fetch("ci_built_product_images")
+    assert_equal expected_products, built.keys.sort
+    built.each_value do |coordinate|
+      assert_match(/\Asha256:[0-9a-f]{64}\z/, coordinate.fetch("docker_image_id"))
+      assert_equal ajent.dig("current", "consumer_commit"), coordinate.fetch("source_commit")
+    end
+
+    candidate_runtime = ajent.fetch("candidate").fetch("runtime")
+    selected = candidate_runtime.fetch("product_selection")
+    assert_equal expected_products, selected.fetch("references").keys.sort
+    selected.fetch("references").each_value do |reference|
+      assert reference.end_with?(":#{ajent.dig('candidate', 'consumer_commit')}")
+      refute reference.end_with?(":latest")
+    end
+    assert_equal ["blackline"], candidate_runtime.fetch("product_images").keys
+    assert_includes ajent.dig("candidate", "promotion_blockers"),
+      "aigl-and-raven-candidate-content-artifacts-have-not-been-built-and-canaried"
+  end
+
+  def test_manifest_candidates_cannot_be_promoted_from_pre_merge_evidence
+    promoter = OpenCodeCompat::RuntimeTuplePromoter.new(root: ROOT)
+    tuples = json("manifests/runtime-tuples.json")
+
+    tuples.fetch("consumers").each do |name, consumer|
+      error = assert_raises(OpenCodeCompat::PromotionError) do
+        promoter.promote(
+          consumer: name,
+          consumer_commit: consumer.dig("candidate", "consumer_commit"),
+          certification: {},
+          dry_run: true
+        )
+      end
+      assert_match(/pre-merge pull-request evidence is candidate-only/, error.message)
+    end
+  end
+
   def test_candidate_evidence_is_bound_to_complete_tuple_fingerprints
     promoter = OpenCodeCompat::RuntimeTuplePromoter.new(root: ROOT)
     evidence_paths = {
@@ -138,6 +245,8 @@ class RepositoryTest < Minitest::Test
       assert_equal consumer, evidence.fetch("consumer")
       assert_equal fingerprints.fetch("profile"), evidence.fetch("profile")
       assert_equal fingerprints.fetch("candidate_tuple_sha256"), evidence.fetch("tuple_sha256")
+      assert_equal "pre-merge-pr-head-candidate-only", evidence.fetch("certification_scope")
+      assert_equal false, evidence.fetch("promotion_eligible")
       assert_equal "pass", evidence.fetch("status")
     end
   end

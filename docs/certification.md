@@ -6,6 +6,16 @@ A candidate tuple is the complete set of client version or commit, Rails gem
 version or commit where applicable, exact OpenCode image, profile, and consumer
 commit. Changing any member invalidates the certification.
 
+There are two distinct scopes:
+
+- `pre-merge-pr-head-candidate-only` proves that one reviewed PR head is
+  compatible. It is never a deployment or promotion authorization.
+- `promotion-deployed` is recorded only after a passing post-merge canary and
+  the consumer coordinate is the actual main/merge commit. If policy
+  deliberately retains the PR-head commit, the evidence must additionally
+  record both Git trees as identical and name the actual main/merge commit.
+  Comparing diffs is not an identical-tree attestation.
+
 The gate requires:
 
 1. repository validation and the shared fixture corpus;
@@ -15,6 +25,19 @@ The gate requires:
 5. a user-visible canary turn for stream consumers;
 6. captured evidence including image ID/digest, server version, source commit,
    gem commits, timestamps, and probe outcome.
+
+For a Git-sourced gem, “gem commit” means the peeled 40-character commit in
+both the Gemfile `ref` and lockfile `revision`, plus runtime loaded-source proof:
+the loaded version, `Bundler::Source::Git`, observed revision (and observed ref
+when the consumer test exposes it), and the consumer test that made those
+assertions. Annotated tag objects remain useful release provenance, but they
+are not an execution coordinate.
+
+Ajent's runtime is a three-product selection. The ledger records AIGL,
+Blackline, and Raven under one source commit. Candidate evidence may say that a
+product artifact has not been built; promotion may not. At promotion time the
+set of content-addressed product artifacts must exactly equal the selected
+product set.
 
 Health-only probes do not certify a tuple.
 
@@ -26,9 +49,18 @@ duplicated `compat-ok\n\ncompat-ok`, fails.
 ## Promotion
 
 Promotion is a reviewed manifest change that moves the old `current` tuple to
-`previous` and the passing candidate to `current`. The consumer change is then
-merged and deployed separately. Workflows in this repository have no deploy
-credentials or deploy steps.
+`previous` and the passing candidate to `current`. The consumer change must
+already have a main/merge identity (or the equal-tree exception below) before
+that manifest change. Production rollout remains a separate consumer-owned
+operation; workflows in this repository have no deploy credentials or deploy
+steps.
+
+Before invoking the promoter, replace PR-head-only metadata with either the
+actual main/merge consumer ref and `main-commit` promotion provenance, or an
+explicit identical-tree attestation containing the main commit/tree. Both
+forms require a post-merge canary evidence path. Set `promotion_eligible` only
+after that evidence exists. The promoter rejects the current PR-head candidates
+even when their compatibility probes pass.
 
 Use the repository promotion command; do not hand-edit the three tuple slots.
 It binds evidence to a canonical SHA-256 of the complete tuple, requires full
@@ -89,10 +121,13 @@ being able to observe the underlying model request. Record that distinction
 explicitly; do not infer a model request count from an application prompt
 count. The exact-image shared contract supplies the model-request proof.
 
-Likewise, the public image job executes `ruby-rest-sse`; it does not silently
-certify Rails persistence, plugin hooks, voice streaming, strict route gates,
-or provider hooks. Those appear as `required_consumer_profiles` in the image
-matrix and need their own consumer evidence before a full tuple can pass.
+Likewise, the public image job executes only `ruby-rest-sse`; it does not
+silently certify Rails persistence, plugin hooks, voice streaming, strict route
+gates, or provider hooks. Every other profile is labeled
+`executable-consumer-attestation` with `shared_ruby_probe_sufficient: false`.
+Those profiles appear as `required_consumer_profiles` in the image matrix and
+need executable evidence from their owning consumer before a full tuple can
+pass. A prose review or a successful shared Ruby probe is not that evidence.
 
 The command clears `candidate` after promotion. It sets the repository-wide
 `migration_state` to `certified` only after every consumer has certified
@@ -105,12 +140,39 @@ coordinates for emergency recovery but mark it failed. Do not create passing
 evidence for it and do not promote it into `previous`. The promoter rejects
 known-failed baselines even if a document claims `pass`.
 
-The safe bootstrap is two-stage: certify and roll out the new candidate, then
-create and canary a distinct consumer rollback commit that preserves the same
-known-good client and exact runtime. Only after both immutable consumer commits
-have real passing evidence can the manifest honestly contain certified
-`current` and `previous` tuples. Until then, `promotion_readiness` remains
-blocked and the candidate PR must not be treated as a deploy authorization.
+Do not manufacture a no-op second commit merely to fill `previous`. Once the
+candidate has been merged, deployed, and canaried under promotion-grade
+provenance, a reviewer may use `bootstrap-current` with this exact
+acknowledgement:
+
+```text
+accept-degraded-rollback-with-failed-emergency-provenance
+```
+
+That operation certifies only `current`, moves the failed baseline to
+`emergency_provenance` without relabeling it, leaves `previous` null, and sets
+`migration_state` to `bootstrap-current-only`. This is an intentionally
+degraded rollback state, not full certification. The next meaningful passing
+release uses normal promotion; the already-certified current tuple then becomes
+the first honest certified `previous` tuple.
+
+Until main/deploy evidence exists, `promotion_readiness` remains blocked and a
+candidate PR must not be treated as deploy authorization.
+
+After reviewing the degraded rollback consequence, preview the explicit
+bootstrap before writing it:
+
+```sh
+ruby scripts/promote_runtime_tuple.rb bootstrap-current \
+  --consumer travelwolf \
+  --consumer-commit FULL_MAIN_OR_ATTESTED_PR_COMMIT \
+  --status pass \
+  --certified-at 2026-07-18T12:00:00Z \
+  --evidence evidence/travelwolf-post-merge.json \
+  --acknowledge-degraded-rollback \
+    accept-degraded-rollback-with-failed-emergency-provenance \
+  --dry-run
+```
 
 ## Rollback
 

@@ -2,17 +2,86 @@
   "schema_version": 1,
   "consumer": "travelwolf",
   "profile": "rails-persisted-turn",
-  "consumer_commit": "19747b59fa21e12560afd9edd73ed674ab3a644c",
+  "consumer_commit": "b9a2c2dd361a6b2ea547cc67ee817b8eb4ce31e8",
+  "consumer_tree": "8b3f8a97dc1f1d8b558a49523bf312d2810422df",
+  "consumer_ref_kind": "pull-request-head",
+  "review_url": "https://gitea.ajay.to/ajaynomics/travelwolf/pulls/29",
+  "certification_scope": "pre-merge-pr-head-candidate-only",
+  "promotion_eligible": false,
   "status": "pass",
-  "certified_at": "2026-07-18T22:03:14Z",
-  "tuple_sha256": "sha256:a7519e661f74d86788928540429c953edcbf20d26321c0dd2b72cd0a1b995b61",
+  "certified_at": "2026-07-18T23:35:57Z",
+  "tuple_sha256": "sha256:bed7d6f6a5e6dd9138c3b960b8bf13ac6f5bf402d0aa7e5c01a52a8e8ea1083d",
   "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
-  "canary": {
-    "run_id": "20260718215135-8d8102c0",
-    "checked_at": "2026-07-18T21:51:56.552Z",
-    "final_text": "TRAVELWOLF_ALPHA7_SUBSCRIBE_READY",
-    "application_prompt_count": 1,
-    "model_request_count_observed": false,
-    "cleanup_status": "pass"
+  "loaded_sources": {
+    "opencode-ruby": {
+      "version": "0.0.1.alpha7",
+      "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "observed_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+    },
+    "opencode-rails": {
+      "version": "0.0.1.alpha7",
+      "requested_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "locked_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "observed_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "observed_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb"
+    },
+    "source_class": "Bundler::Source::Git",
+    "proof_test": "test/services/travelwolf/opencode_env_wiring_test.rb",
+    "status": "pass"
+  },
+  "deterministic_contract": {
+    "checked_at": "2026-07-18T23:23:03Z",
+    "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+    "opencode_ruby_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+    "expected_text": "compat-ok",
+    "full_text": "compat-ok",
+    "authoritative_assistant_count": 1,
+    "model_request_count": 1,
+    "status": "pass"
+  },
+  "application_canary": {
+    "run_id": "travelwolf-alpha7-ref-20260718T232211Z-48eadf",
+    "checked_at": "2026-07-18T23:22:26.216140Z",
+    "final_text": "TRAVELWOLF_ALPHA7_REF_PIN_READY",
+    "subscription_ready_before_prompt": true,
+    "opencode_api_prompt_count": 1,
+    "provider_request_count_observed": false,
+    "message_roles": [
+      "user",
+      "assistant"
+    ],
+    "cleanup_status": "pass",
+    "status": "pass"
+  },
+  "consumer_verification": {
+    "source_guard": {
+      "runs": 4,
+      "assertions": 110,
+      "failures": 0,
+      "errors": 0
+    },
+    "focused_tests": {
+      "runs": 31,
+      "assertions": 248,
+      "failures": 0,
+      "errors": 0
+    },
+    "bounded_full_tests": {
+      "runs": 2300,
+      "assertions": 21679,
+      "failures": 0,
+      "errors": 0
+    },
+    "rubocop": {
+      "changed_ruby_files": 6,
+      "offenses": 0
+    },
+    "remotes_exact": [
+      "origin",
+      "github",
+      "backup"
+    ]
   }
 }

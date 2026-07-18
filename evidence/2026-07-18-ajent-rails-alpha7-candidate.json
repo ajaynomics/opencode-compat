@@ -2,15 +2,87 @@
   "schema_version": 1,
   "consumer": "ajent-rails",
   "profile": "rails-persisted-turn",
-  "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+  "consumer_commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2",
+  "consumer_tree": "9e93834ad16b60fa5edfe1cb3baaba193402be74",
+  "consumer_ref_kind": "pull-request-head",
+  "review_url": "https://gitea.ajay.to/ajaynomics/ajent-rails/pulls/946",
+  "certification_scope": "pre-merge-pr-head-candidate-only",
+  "promotion_eligible": false,
   "status": "pass",
-  "certified_at": "2026-07-18T22:03:14Z",
-  "tuple_sha256": "sha256:2fc1026cf247b5ad5677bfa4673c1073f7c2478769dca0cc8443a0924cebfca3",
+  "certified_at": "2026-07-18T23:28:16.435369Z",
+  "tuple_sha256": "sha256:e7026c294d0b2981f6ec785a45afb69969f4dc2b4d0ed6533f9bda5153304663",
   "shared_evidence": "evidence/2026-07-18-opencode-ruby-alpha7.json",
-  "canary": {
-    "checked_at": "2026-07-18T21:58:00Z",
-    "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+  "loaded_sources": {
+    "opencode-ruby": {
+      "version": "0.0.1.alpha7",
+      "requested_ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "locked_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "observed_revision": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+    },
+    "opencode-rails": {
+      "version": "0.0.1.alpha7",
+      "requested_ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "locked_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "observed_revision": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb"
+    },
+    "source_class": "Bundler::Source::Git",
+    "proof_test": "test/lib/opencode/runtime_image_provenance_test.rb",
+    "status": "pass"
+  },
+  "deterministic_contract": {
+    "checked_at": "2026-07-18T23:16:13Z",
+    "docker_image_id": "sha256:075cb49ac7fcb1f8972e051dff96d655fa0d0d911d83a523a6abf03a5e2e2935",
+    "expected_text": "compat-ok",
+    "full_text": "compat-ok",
+    "authoritative_assistant_count": 1,
+    "model_request_count": 1,
+    "status": "pass"
+  },
+  "application_canary": {
+    "checked_at": "2026-07-18T23:28:16.435369Z",
+    "docker_image_id": "sha256:075cb49ac7fcb1f8972e051dff96d655fa0d0d911d83a523a6abf03a5e2e2935",
     "persisted_final_text": "compat-ok",
-    "model_request_count": 1
+    "authoritative_final_text": "compat-ok",
+    "authoritative_assistant_count": 1,
+    "model_request_count": 1,
+    "cleanup_status": "pass",
+    "status": "pass"
+  },
+  "consumer_verification": {
+    "tests": {
+      "runs": 4077,
+      "assertions": 14495,
+      "failures": 0,
+      "errors": 0,
+      "existing_skips": 4
+    },
+    "rubocop": {
+      "files": 1365,
+      "offenses": 0
+    },
+    "gitea_actions": {
+      "run_id": 2545,
+      "status": "success",
+      "commit": "01cdf9da8e1b3f9a205d681e448aefefd9704db2"
+    },
+    "remotes_exact": [
+      "origin",
+      "github",
+      "backup"
+    ]
+  },
+  "product_artifact_coverage": {
+    "selected_products": [
+      "aigl",
+      "blackline",
+      "raven"
+    ],
+    "content_addressed_artifacts": [
+      "blackline"
+    ],
+    "missing_before_promotion": [
+      "aigl",
+      "raven"
+    ]
   }
 }

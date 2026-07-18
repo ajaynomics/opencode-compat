@@ -16,11 +16,29 @@ prompts, credentials, sessions, or user data belong here.
   can pull them. Public CI certifies their upstream base plus the same profile.
 - Promotion is explicit. CI may certify a tuple and the watcher may open a PR;
   neither workflow deploys or changes a consumer.
-- Each consumer retains both `current` and `previous` certified tuples so a
-  rollback restores the gem and server together.
+- A passing pull-request head is candidate evidence only. Promotion and
+  deployed certification use the actual main/merge commit, or an explicit
+  equal-tree attestation paired with a passing post-merge canary.
+- Git-sourced gems use the full peeled commit as the Bundler `ref` and lockfile
+  revision. A consumer test must also prove the running process loaded that
+  exact `Bundler::Source::Git`; a release tag or lockfile alone is provenance,
+  not loaded-source proof.
+- Ajent records AIGL, Blackline, and Raven selections together. Every selected
+  product needs a content digest or local image ID before promotion; a full
+  commit tag selects a candidate build but does not prove its content.
+- In steady state, each consumer retains both `current` and `previous`
+  certified tuples so a rollback restores the gem and server together. The
+  explicitly labeled bootstrap state is the temporary degraded exception.
 - A failing bootstrap baseline is never relabeled as a certified `previous`
-  tuple. Promotion stays blocked until a distinct rollback consumer commit is
-  pinned to a passing client/runtime tuple and canaried.
+  tuple. After a real main/deploy canary, an explicitly acknowledged degraded
+  bootstrap may certify only `current`; it leaves `previous` null and keeps the
+  failed baseline as emergency provenance. The next meaningful passing release
+  becomes the first genuine certified rollback tuple.
+
+The runtime ledger is schema version 2; its machine-readable shape lives at
+[`schemas/runtime-tuples.schema.json`](schemas/runtime-tuples.schema.json).
+The current candidates remain deliberately unpromotable PR-head records, and
+all `previous` slots remain `null` because no passing rollback tuple exists.
 
 ## What is covered
 

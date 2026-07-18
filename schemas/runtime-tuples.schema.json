@@ -1,0 +1,401 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/ajaynomics/opencode-compat/schemas/runtime-tuples.schema.json",
+  "title": "OpenCode runtime tuple ledger",
+  "type": "object",
+  "required": [
+    "schema_version",
+    "migration_state",
+    "promotion_readiness",
+    "consumers"
+  ],
+  "properties": {
+    "schema_version": {
+      "const": 2
+    },
+    "migration_state": {
+      "enum": [
+        "candidate",
+        "bootstrap-current-only",
+        "certified"
+      ]
+    },
+    "consumers": {
+      "type": "object",
+      "additionalProperties": {
+        "type": "object",
+        "required": [
+          "profile",
+          "current",
+          "candidate",
+          "previous"
+        ],
+        "properties": {
+          "rollback_state": {
+            "type": "object",
+            "required": [
+              "status",
+              "acknowledgement",
+              "recorded_at",
+              "emergency_provenance_status"
+            ],
+            "properties": {
+              "status": {
+                "const": "degraded-no-certified-previous"
+              },
+              "acknowledgement": {
+                "const": "accept-degraded-rollback-with-failed-emergency-provenance"
+              },
+              "emergency_provenance_status": {
+                "const": "observed-production-contract-failed"
+              }
+            }
+          },
+          "candidate": {
+            "oneOf": [
+              {
+                "type": "null"
+              },
+              {
+                "$ref": "#/$defs/candidate"
+              }
+            ]
+          }
+        }
+      }
+    }
+  },
+  "$defs": {
+    "fullCommit": {
+      "type": "string",
+      "pattern": "^[0-9a-f]{40}$"
+    },
+    "loadedGitSource": {
+      "type": "object",
+      "required": [
+        "type",
+        "uri",
+        "requested_ref",
+        "locked_revision",
+        "loaded_source_proof"
+      ],
+      "properties": {
+        "type": {
+          "const": "git"
+        },
+        "requested_ref": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "locked_revision": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "loaded_source_proof": {
+          "type": "object",
+          "required": [
+            "status",
+            "source_class",
+            "loaded_version",
+            "observed_revision",
+            "test"
+          ],
+          "properties": {
+            "status": {
+              "const": "pass"
+            },
+            "source_class": {
+              "const": "Bundler::Source::Git"
+            },
+            "observed_ref": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "observed_revision": {
+              "$ref": "#/$defs/fullCommit"
+            }
+          }
+        }
+      }
+    },
+    "client": {
+      "type": "object",
+      "required": [
+        "version",
+        "git_commit",
+        "source"
+      ],
+      "properties": {
+        "git_commit": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "source": {
+          "$ref": "#/$defs/loadedGitSource"
+        }
+      }
+    },
+    "consumerRef": {
+      "type": "object",
+      "required": [
+        "kind",
+        "repository",
+        "commit",
+        "tree"
+      ],
+      "properties": {
+        "kind": {
+          "enum": [
+            "pull-request-head",
+            "main-commit"
+          ]
+        },
+        "commit": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "tree": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "base_commit": {
+          "$ref": "#/$defs/fullCommit"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "kind": {
+                "const": "pull-request-head"
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "base_commit",
+              "review_url"
+            ]
+          }
+        }
+      ]
+    },
+    "promotionProvenance": {
+      "oneOf": [
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "main_commit",
+            "post_merge_canary"
+          ],
+          "properties": {
+            "kind": {
+              "const": "main-commit"
+            },
+            "main_commit": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "post_merge_canary": {
+              "type": "object",
+              "required": [
+                "status",
+                "checked_at",
+                "evidence"
+              ],
+              "properties": {
+                "status": {
+                  "const": "pass"
+                },
+                "evidence": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^evidence/"
+                  }
+                }
+              }
+            }
+          }
+        },
+        {
+          "type": "object",
+          "required": [
+            "kind",
+            "pull_request_commit",
+            "pull_request_tree",
+            "main_commit",
+            "main_tree",
+            "attested_at",
+            "post_merge_canary"
+          ],
+          "properties": {
+            "kind": {
+              "const": "identical-tree-attestation"
+            },
+            "pull_request_commit": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "pull_request_tree": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "main_commit": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "main_tree": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "post_merge_canary": {
+              "type": "object",
+              "required": [
+                "status",
+                "checked_at",
+                "evidence"
+              ],
+              "properties": {
+                "status": {
+                  "const": "pass"
+                },
+                "evidence": {
+                  "type": "array",
+                  "minItems": 1,
+                  "items": {
+                    "type": "string",
+                    "pattern": "^evidence/"
+                  }
+                }
+              }
+            }
+          }
+        }
+      ]
+    },
+    "runtime": {
+      "type": "object",
+      "required": [
+        "reported_version"
+      ],
+      "properties": {
+        "product_selection": {
+          "type": "object",
+          "required": [
+            "strategy",
+            "source_commit",
+            "references"
+          ],
+          "properties": {
+            "strategy": {
+              "const": "full-consumer-commit-tag"
+            },
+            "source_commit": {
+              "$ref": "#/$defs/fullCommit"
+            },
+            "references": {
+              "type": "object",
+              "minProperties": 1,
+              "additionalProperties": {
+                "type": "string",
+                "pattern": ":[0-9a-f]{40}$"
+              }
+            }
+          }
+        },
+        "product_images": {
+          "type": "object",
+          "minProperties": 1,
+          "additionalProperties": {
+            "type": "object",
+            "required": [
+              "source_commit"
+            ],
+            "properties": {
+              "source_commit": {
+                "$ref": "#/$defs/fullCommit"
+              },
+              "docker_image_id": {
+                "type": "string",
+                "pattern": "^sha256:[0-9a-f]{64}$"
+              },
+              "image": {
+                "type": "string",
+                "pattern": "@sha256:[0-9a-f]{64}$"
+              }
+            },
+            "anyOf": [
+              {
+                "required": [
+                  "docker_image_id"
+                ]
+              },
+              {
+                "required": [
+                  "image"
+                ]
+              }
+            ]
+          }
+        }
+      }
+    },
+    "candidate": {
+      "type": "object",
+      "required": [
+        "status",
+        "certification_scope",
+        "promotion_eligible",
+        "consumer_commit",
+        "consumer_ref",
+        "opencode_ruby",
+        "runtime"
+      ],
+      "properties": {
+        "status": {
+          "const": "compatibility-certified"
+        },
+        "certification_scope": {
+          "enum": [
+            "pre-merge-pr-head-candidate-only",
+            "promotion-deployed"
+          ]
+        },
+        "promotion_eligible": {
+          "type": "boolean"
+        },
+        "consumer_commit": {
+          "$ref": "#/$defs/fullCommit"
+        },
+        "consumer_ref": {
+          "$ref": "#/$defs/consumerRef"
+        },
+        "promotion_provenance": {
+          "$ref": "#/$defs/promotionProvenance"
+        },
+        "opencode_ruby": {
+          "$ref": "#/$defs/client"
+        },
+        "opencode_rails": {
+          "$ref": "#/$defs/client"
+        },
+        "runtime": {
+          "$ref": "#/$defs/runtime"
+        }
+      },
+      "allOf": [
+        {
+          "if": {
+            "properties": {
+              "promotion_eligible": {
+                "const": true
+              }
+            }
+          },
+          "then": {
+            "required": [
+              "promotion_provenance"
+            ],
+            "properties": {
+              "certification_scope": {
+                "const": "promotion-deployed"
+              }
+            }
+          }
+        }
+      ]
+    }
+  }
+}
