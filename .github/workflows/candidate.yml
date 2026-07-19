@@ -14,7 +14,7 @@ jobs:
   repository:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
@@ -40,7 +40,7 @@ jobs:
       rails_tag: ${{ steps.clients.outputs.rails_tag }}
       rails_tag_object: ${{ steps.clients.outputs.rails_tag_object }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - id: matrix
         run: echo "value=$(ruby scripts/matrix_json.rb)" >> "$GITHUB_OUTPUT"
       - id: clients
@@ -81,8 +81,8 @@ jobs:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-ruby
           ref: ${{ needs.prepare.outputs.ruby_ref }}
@@ -119,7 +119,7 @@ jobs:
           bundle exec ruby ../ruby/opencode_ruby_fixture_contract.rb
       - name: Upload fixture evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ruby-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
           path: .compat-evidence/ruby-fixtures.json
@@ -136,15 +136,15 @@ jobs:
         ruby: ["3.2", "3.3", "3.4"]
     name: lockstep clients Ruby ${{ matrix.ruby }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-ruby
           ref: ${{ needs.prepare.outputs.ruby_ref }}
           path: ruby-client
           fetch-depth: 0
           fetch-tags: true
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-rails
           ref: ${{ needs.prepare.outputs.rails_ref }}
@@ -190,7 +190,7 @@ jobs:
           bundle exec ruby ../ruby/lockstep_client_contract.rb
       - name: Upload lockstep evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lockstep-ruby-${{ matrix.ruby }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .compat-evidence/lockstep-ruby-${{ matrix.ruby }}.json
@@ -206,8 +206,8 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     name: image ${{ matrix.id }}
     steps:
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
-      - uses: actions/checkout@34e114876b0b11c390a56381ad16ebd13914f8d5 # v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-ruby
           ref: ${{ needs.prepare.outputs.ruby_ref }}
@@ -252,7 +252,7 @@ jobs:
           bundle exec scripts/run_image_contract.sh
       - name: Upload exact-image evidence
         if: always()
-        uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02 # v4
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: image-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
           path: .compat-evidence/${{ matrix.id }}.json

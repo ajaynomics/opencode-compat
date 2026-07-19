@@ -176,6 +176,26 @@ class RepositoryTest < Minitest::Test
     end
   end
 
+  def test_workflow_actions_use_reviewed_node24_compatible_pins
+    expected = {
+      "actions/checkout" => "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+      "actions/upload-artifact" => "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "ruby/setup-ruby" => "003a5c4d8d6321bd302e38f6f0ec593f77f06600"
+    }
+    observed = Hash.new { |hash, key| hash[key] = [] }
+
+    Dir.glob(File.join(ROOT, ".github/workflows/*.{yml,yaml}")).each do |path|
+      File.read(path).scan(/\buses:\s+([^\s@]+)@([0-9a-f]{40})/) do |action, commit|
+        observed[action] << commit if expected.key?(action)
+      end
+    end
+
+    expected.each do |action, commit|
+      refute_empty observed.fetch(action), "expected at least one #{action} use"
+      assert_equal [commit], observed.fetch(action).uniq, "#{action} must stay on the reviewed Node 24 pin"
+    end
+  end
+
   def test_candidate_workflow_verifies_and_preserves_the_lockstep_client_tuple
     workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
 
