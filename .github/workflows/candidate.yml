@@ -148,29 +148,29 @@ jobs:
         with:
           repository: ajaynomics/opencode-rails
           ref: ${{ needs.prepare.outputs.rails_ref }}
-          path: rails-client
+          path: opencode-rails
           fetch-depth: 0
           fetch-tags: true
       - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: true
-          working-directory: rails-client
+          working-directory: opencode-rails
       - name: Verify immutable candidate checkouts
         env:
           EXPECTED_RUBY_SHA: ${{ needs.prepare.outputs.ruby_ref }}
           EXPECTED_RAILS_SHA: ${{ needs.prepare.outputs.rails_ref }}
         run: |
           test "$(git -C ruby-client rev-parse HEAD)" = "$EXPECTED_RUBY_SHA"
-          test "$(git -C rails-client rev-parse HEAD)" = "$EXPECTED_RAILS_SHA"
+          test "$(git -C opencode-rails rev-parse HEAD)" = "$EXPECTED_RAILS_SHA"
       - name: Rails candidate unit tests
-        working-directory: rails-client
+        working-directory: opencode-rails
         run: bundle exec rake test
       - name: Lockstep client provenance contract
-        working-directory: rails-client
+        working-directory: opencode-rails
         env:
           OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
-          OPENCODE_RAILS_PATH: ${{ github.workspace }}/rails-client
+          OPENCODE_RAILS_PATH: ${{ github.workspace }}/opencode-rails
           OPENCODE_RUBY_COMMIT: ${{ needs.prepare.outputs.ruby_ref }}
           OPENCODE_RUBY_TAG: ${{ needs.prepare.outputs.ruby_tag }}
           OPENCODE_RUBY_TAG_OBJECT: ${{ needs.prepare.outputs.ruby_tag_object }}

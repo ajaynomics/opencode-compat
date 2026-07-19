@@ -183,6 +183,7 @@ class RepositoryTest < Minitest::Test
     refute_includes workflow, "inputs.opencode_rails_ref"
     assert_includes workflow, "repository: ajaynomics/opencode-ruby"
     assert_includes workflow, "repository: ajaynomics/opencode-rails"
+    assert_includes workflow, "path: opencode-rails"
     assert_includes workflow, "ruby: [\"3.2\", \"3.3\", \"3.4\"]"
     assert_includes workflow, "ruby/lockstep_client_contract.rb"
     assert_includes workflow, "OPENCODE_RUBY_TAG_OBJECT"
