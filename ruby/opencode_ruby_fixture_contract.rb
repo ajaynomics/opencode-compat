@@ -1,6 +1,8 @@
 # frozen_string_literal: true
 
 require "json"
+require "fileutils"
+require "time"
 
 root = File.expand_path("..", __dir__)
 gem_path = File.expand_path(ENV.fetch("OPENCODE_RUBY_PATH"))
@@ -9,6 +11,12 @@ require "opencode-ruby"
 
 manifest = JSON.parse(File.read(File.join(root, "fixtures/manifest.json")))
 failures = []
+write_evidence = lambda do |document|
+  next unless (evidence_path = ENV["OPENCODE_COMPAT_EVIDENCE_PATH"])
+
+  FileUtils.mkdir_p(File.dirname(evidence_path))
+  File.write(evidence_path, JSON.pretty_generate(document) + "\n")
+end
 
 manifest.fetch("fixtures").each do |entry|
   reply = Opencode::Reply.new
@@ -56,14 +64,45 @@ manifest.fetch("fixtures").each do |entry|
 end
 
 unless failures.empty?
+  evidence = {
+    schema_version: 1,
+    kind: "shared-ruby-fixture-contract",
+    status: "fail",
+    checked_at: Time.now.utc.iso8601,
+    adapter: "opencode-ruby",
+    adapter_version: Opencode::VERSION,
+    adapter_commit: ENV["OPENCODE_RUBY_COMMIT"],
+    fixture_count: manifest.fetch("fixtures").length,
+    failures: failures,
+    workflow: {
+      run_id: ENV["OPENCODE_COMPAT_RUN_ID"],
+      run_attempt: ENV["OPENCODE_COMPAT_RUN_ATTEMPT"],
+      head_sha: ENV["OPENCODE_COMPAT_HEAD_SHA"],
+      repository: ENV["OPENCODE_COMPAT_REPOSITORY"],
+      run_url: ENV["OPENCODE_COMPAT_RUN_URL"]
+    }
+  }
+  write_evidence.call(evidence)
   warn failures.join("\n")
   exit 1
 end
 
-puts JSON.generate(
+evidence = {
+  schema_version: 1,
+  kind: "shared-ruby-fixture-contract",
   status: "pass",
+  checked_at: Time.now.utc.iso8601,
   adapter: "opencode-ruby",
   adapter_version: Opencode::VERSION,
   adapter_commit: ENV["OPENCODE_RUBY_COMMIT"],
-  fixture_count: manifest.fetch("fixtures").length
-)
+  fixture_count: manifest.fetch("fixtures").length,
+  workflow: {
+    run_id: ENV["OPENCODE_COMPAT_RUN_ID"],
+    run_attempt: ENV["OPENCODE_COMPAT_RUN_ATTEMPT"],
+    head_sha: ENV["OPENCODE_COMPAT_HEAD_SHA"],
+    repository: ENV["OPENCODE_COMPAT_REPOSITORY"],
+    run_url: ENV["OPENCODE_COMPAT_RUN_URL"]
+  }
+}
+puts JSON.generate(evidence)
+write_evidence.call(evidence)

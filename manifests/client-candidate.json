@@ -1,11 +1,33 @@
 {
-  "repository": "ajaynomics/opencode-ruby",
-  "ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-  "version": "0.0.1.alpha7",
-  "tag_provenance": {
-    "tag": "v0.0.1.alpha7",
-    "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645",
-    "peeled_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+  "schema_version": 2,
+  "release_train": "0.0.1.alpha7",
+  "clients": {
+    "opencode-ruby": {
+      "repository": "ajaynomics/opencode-ruby",
+      "ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+      "version": "0.0.1.alpha7",
+      "tag_provenance": {
+        "tag": "v0.0.1.alpha7",
+        "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645",
+        "peeled_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+      }
+    },
+    "opencode-rails": {
+      "repository": "ajaynomics/opencode-rails",
+      "ref": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+      "version": "0.0.1.alpha7",
+      "tag_provenance": {
+        "tag": "v0.0.1.alpha7",
+        "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c",
+        "peeled_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb"
+      },
+      "runtime_dependencies": {
+        "opencode-ruby": {
+          "requirement": "= 0.0.1.alpha7",
+          "ref": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+        }
+      }
+    }
   },
   "status": "candidate"
 }
