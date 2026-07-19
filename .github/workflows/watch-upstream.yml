@@ -17,7 +17,7 @@ jobs:
   open-compatibility-pr:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           fetch-depth: 0
       - name: Resolve latest release
@@ -27,55 +27,153 @@ jobs:
         run: |
           release="$(gh api repos/anomalyco/opencode/releases/latest)"
           tag="$(jq -r .tag_name <<<"$release")"
+          digest="$(docker buildx imagetools inspect "ghcr.io/anomalyco/opencode:${tag#v}" --format '{{json .Manifest}}' | jq -r .digest)"
+          image="ghcr.io/anomalyco/opencode@$digest"
+          published_at="$(jq -r .published_at <<<"$release")"
+          release_url="$(jq -r .html_url <<<"$release")"
           current="$(jq -r .release_tag manifests/upstream.json)"
+          current_image="$(jq -r .image manifests/upstream.json)"
+          current_image_count="$(
+            jq \
+              --arg image "$image" \
+              '[.public_ci[]? | select(.image == $image)] | length' \
+              manifests/image-matrix.json
+          )"
+          ruby scripts/upstream_branch_name.rb "$tag" "$digest" >/dev/null
+          ruby -rtime -e 'Time.iso8601(ARGV.fetch(0))' "$published_at"
+          test "$release_url" = "https://github.com/anomalyco/opencode/releases/tag/$tag"
           echo "tag=$tag" >> "$GITHUB_OUTPUT"
-          echo "published_at=$(jq -r .published_at <<<"$release")" >> "$GITHUB_OUTPUT"
-          echo "release_url=$(jq -r .html_url <<<"$release")" >> "$GITHUB_OUTPUT"
-          if [ "$tag" = "$current" ]; then
+          echo "digest=$digest" >> "$GITHUB_OUTPUT"
+          echo "published_at=$published_at" >> "$GITHUB_OUTPUT"
+          echo "release_url=$release_url" >> "$GITHUB_OUTPUT"
+          if [ "$tag" = "$current" ] && [ "$image" != "$current_image" ]; then
+            echo "same_tag_digest_changed=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "same_tag_digest_changed=false" >> "$GITHUB_OUTPUT"
+          fi
+          if [ "$tag" = "$current" ] && [ "$image" = "$current_image" ] && [ "$current_image_count" -eq 1 ]; then
             echo "changed=false" >> "$GITHUB_OUTPUT"
           else
             echo "changed=true" >> "$GITHUB_OUTPUT"
           fi
-      - name: Stop when a PR already exists
+      - name: Resolve collision-safe compatibility branch
         if: steps.release.outputs.changed == 'true'
-        id: existing
+        id: branch
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
+          DIGEST: ${{ steps.release.outputs.digest }}
         run: |
-          branch="compat/upstream-${TAG#v}"
-          count="$(gh pr list --state open --head "$branch" --json number --jq length)"
-          echo "branch=$branch" >> "$GITHUB_OUTPUT"
-          if [ "$count" -gt 0 ]; then
+          base_branch="$(ruby scripts/upstream_branch_name.rb "$TAG" "$DIGEST")"
+          expected_image="ghcr.io/anomalyco/opencode@$DIGEST"
+          open_branch=""
+          open_prs="$(
+            gh pr list --state open --base main --limit 1000 \
+              --json baseRefName,headRefName,headRefOid,headRepository,headRepositoryOwner,isCrossRepository
+          )"
+          while IFS=$'\t' read -r candidate_branch head_oid; do
+            [ -n "$candidate_branch" ] || continue
+            if ! candidate_upstream="$(
+              gh api \
+                -H "Accept: application/vnd.github.raw+json" \
+                "repos/$GITHUB_REPOSITORY/contents/manifests/upstream.json?ref=$head_oid" 2>/dev/null
+            )"; then
+              continue
+            fi
+            if ! candidate_matrix="$(
+              gh api \
+                -H "Accept: application/vnd.github.raw+json" \
+                "repos/$GITHUB_REPOSITORY/contents/manifests/image-matrix.json?ref=$head_oid" 2>/dev/null
+            )"; then
+              continue
+            fi
+            if jq -e \
+                --arg tag "$TAG" \
+                --arg image "$expected_image" \
+                '.release_tag == $tag and .image == $image' \
+                >/dev/null <<<"$candidate_upstream" &&
+              jq -e \
+                --arg image "$expected_image" \
+                '([.public_ci[]? | select(.image == $image)] | length) == 1' \
+                >/dev/null <<<"$candidate_matrix"; then
+              open_branch="$candidate_branch"
+              break
+            fi
+          done < <(
+            jq -r \
+              --arg base "$base_branch" \
+              --arg owner "${GITHUB_REPOSITORY%%/*}" \
+              --arg repository "${GITHUB_REPOSITORY#*/}" \
+              '.[] | select(
+                .baseRefName == "main" and
+                .isCrossRepository == false and
+                .headRepositoryOwner.login == $owner and
+                .headRepository.name == $repository and
+                (.headRefName == $base or (.headRefName | startswith($base + "-r")))
+              ) | [.headRefName, .headRefOid] | @tsv' \
+              <<<"$open_prs"
+          )
+          if [ -n "$open_branch" ]; then
+            echo "branch=$open_branch" >> "$GITHUB_OUTPUT"
             echo "skip=true" >> "$GITHUB_OUTPUT"
-          else
-            echo "skip=false" >> "$GITHUB_OUTPUT"
+            exit 0
           fi
+
+          branch="$base_branch"
+          existing_count="$(
+            gh pr list --state all --base main --head "$base_branch" --limit 1000 \
+              --json baseRefName,headRepository,headRepositoryOwner,isCrossRepository |
+              jq \
+                --arg owner "${GITHUB_REPOSITORY%%/*}" \
+                --arg repository "${GITHUB_REPOSITORY#*/}" \
+                '[.[] | select(
+                  .baseRefName == "main" and
+                  .isCrossRepository == false and
+                  .headRepositoryOwner.login == $owner and
+                  .headRepository.name == $repository
+                )] | length'
+          )"
+          if [ "$existing_count" -gt 0 ] || git ls-remote --exit-code --heads origin "$base_branch" >/dev/null 2>&1; then
+            branch="$(ruby scripts/upstream_branch_name.rb "$TAG" "$DIGEST" "${GITHUB_RUN_ID}-${GITHUB_RUN_ATTEMPT}")"
+          fi
+          echo "branch=$branch" >> "$GITHUB_OUTPUT"
+          echo "skip=false" >> "$GITHUB_OUTPUT"
       - name: Resolve immutable image and update manifests
-        if: steps.release.outputs.changed == 'true' && steps.existing.outputs.skip == 'false'
+        if: steps.release.outputs.changed == 'true' && steps.branch.outputs.skip == 'false'
         env:
           TAG: ${{ steps.release.outputs.tag }}
           PUBLISHED_AT: ${{ steps.release.outputs.published_at }}
           RELEASE_URL: ${{ steps.release.outputs.release_url }}
+          DIGEST: ${{ steps.release.outputs.digest }}
         run: |
-          digest="$(docker buildx imagetools inspect "ghcr.io/anomalyco/opencode:${TAG#v}" --format '{{json .Manifest}}' | jq -r .digest)"
-          ruby scripts/record_upstream_candidate.rb "$TAG" "$PUBLISHED_AT" "$RELEASE_URL" "$digest"
+          ruby scripts/record_upstream_candidate.rb "$TAG" "$PUBLISHED_AT" "$RELEASE_URL" "$DIGEST"
           ruby test/repository_test.rb
+          ruby test/watcher_test.rb
       - name: Open compatibility PR
-        if: steps.release.outputs.changed == 'true' && steps.existing.outputs.skip == 'false'
+        if: steps.release.outputs.changed == 'true' && steps.branch.outputs.skip == 'false'
         env:
           GH_TOKEN: ${{ github.token }}
           TAG: ${{ steps.release.outputs.tag }}
-          BRANCH: ${{ steps.existing.outputs.branch }}
+          DIGEST: ${{ steps.release.outputs.digest }}
+          BRANCH: ${{ steps.branch.outputs.branch }}
+          SAME_TAG_DIGEST_CHANGED: ${{ steps.release.outputs.same_tag_digest_changed }}
         run: |
           git config user.name "opencode-compat-bot"
           git config user.email "opencode-compat-bot@users.noreply.github.com"
+          short_digest="${DIGEST#sha256:}"
+          short_digest="${short_digest:0:12}"
           git switch -c "$BRANCH"
           git add manifests/image-matrix.json manifests/upstream.json
-          git commit -m "Test OpenCode ${TAG} compatibility"
+          git commit -m "Test OpenCode ${TAG} compatibility (${short_digest})"
           git push --set-upstream origin "$BRANCH"
+          title="Test OpenCode ${TAG} compatibility (${short_digest})"
+          notice="Upstream watcher resolved ${TAG} to immutable OCI digest ${DIGEST}."
+          if [ "$SAME_TAG_DIGEST_CHANGED" = "true" ]; then
+            title="Review changed OCI digest for existing OpenCode ${TAG} (${short_digest})"
+            notice="Security-sensitive change: existing release ${TAG} now resolves to a different OCI digest, ${DIGEST}."
+          fi
           gh pr create \
             --base main \
             --head "$BRANCH" \
-            --title "Test OpenCode ${TAG} compatibility" \
-            --body "Upstream watcher detected ${TAG}, resolved its immutable OCI digest, and added it as a pending compatibility target. This PR only runs certification checks; promotion and consumer rollout remain manual."
+            --title "$title" \
+            --body "${notice} The watcher added it as a pending compatibility target. This PR only runs certification checks; promotion and consumer rollout remain manual."

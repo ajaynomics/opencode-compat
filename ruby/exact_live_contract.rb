@@ -13,12 +13,21 @@ module OpenCodeCompat
     end
 
     def assert_model_request_count!(value)
-      count = Integer(value, 10)
+      count = Integer(value.to_s, 10)
       return if count == 1
 
       raise ContractError, "Expected exactly one deterministic model request, got #{count}"
     rescue ArgumentError, TypeError
       raise ContractError, "Deterministic model request count is not an integer: #{value.inspect}"
+    end
+
+    def assert_authoritative_assistant_count!(value)
+      count = Integer(value.to_s, 10)
+      return if count == 1
+
+      raise ContractError, "Expected exactly one authoritative assistant message, got #{count}"
+    rescue ArgumentError, TypeError
+      raise ContractError, "Authoritative assistant message count is not an integer: #{value.inspect}"
     end
   end
 end

@@ -37,7 +37,7 @@ begin
 
   messages = client.get_messages(session_id)
   assistant_messages = Array(messages).select { |message| message.dig(:info, :role) == "assistant" }
-  raise "No authoritative assistant exchange returned" if assistant_messages.empty?
+  OpenCodeCompat::ExactLiveContract.assert_authoritative_assistant_count!(assistant_messages.length)
 
   puts JSON.generate(
     status: "pass",

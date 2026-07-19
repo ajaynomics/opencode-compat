@@ -6,65 +6,197 @@ on:
   pull_request:
     branches: [main]
   workflow_dispatch:
-    inputs:
-      opencode_ruby_ref:
-        description: Candidate opencode-ruby ref; blank uses the manifest
-        required: false
-        type: string
+
+permissions:
+  contents: read
 
 jobs:
   repository:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: ruby/setup-ruby@v1
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
-      - run: ruby test/repository_test.rb && ruby test/runtime_tuple_promoter_test.rb && ruby test/exact_live_contract_test.rb
+      - run: |
+          ruby test/repository_test.rb
+          ruby test/runtime_tuple_promoter_test.rb
+          ruby test/exact_live_contract_test.rb
+          ruby test/watcher_test.rb
+          ruby test/lockstep_client_contract_test.rb
+          ruby test/matrix_json_test.rb
+          ruby test/image_contract_evidence_test.rb
 
   prepare:
     runs-on: ubuntu-latest
     outputs:
       matrix: ${{ steps.matrix.outputs.value }}
-      client_ref: ${{ steps.client.outputs.value }}
+      ruby_ref: ${{ steps.clients.outputs.ruby_ref }}
+      ruby_version: ${{ steps.clients.outputs.ruby_version }}
+      ruby_tag: ${{ steps.clients.outputs.ruby_tag }}
+      ruby_tag_object: ${{ steps.clients.outputs.ruby_tag_object }}
+      rails_ref: ${{ steps.clients.outputs.rails_ref }}
+      rails_version: ${{ steps.clients.outputs.rails_version }}
+      rails_tag: ${{ steps.clients.outputs.rails_tag }}
+      rails_tag_object: ${{ steps.clients.outputs.rails_tag_object }}
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - id: matrix
         run: echo "value=$(ruby scripts/matrix_json.rb)" >> "$GITHUB_OUTPUT"
-      - id: client
-        env:
-          INPUT_REF: ${{ inputs.opencode_ruby_ref }}
+      - id: clients
         run: |
-          if [ -n "$INPUT_REF" ]; then
-            echo "value=$INPUT_REF" >> "$GITHUB_OUTPUT"
-          else
-            echo "value=$(jq -r .ref manifests/client-candidate.json)" >> "$GITHUB_OUTPUT"
+          ruby_ref="$(jq -r '.clients["opencode-ruby"].ref' manifests/client-candidate.json)"
+          ruby_version="$(jq -r '.clients["opencode-ruby"].version' manifests/client-candidate.json)"
+          ruby_tag="$(jq -r '.clients["opencode-ruby"].tag_provenance.tag' manifests/client-candidate.json)"
+          ruby_tag_object="$(jq -r '.clients["opencode-ruby"].tag_provenance.annotated_tag_object' manifests/client-candidate.json)"
+          rails_ref="$(jq -r '.clients["opencode-rails"].ref' manifests/client-candidate.json)"
+          rails_version="$(jq -r '.clients["opencode-rails"].version' manifests/client-candidate.json)"
+          rails_tag="$(jq -r '.clients["opencode-rails"].tag_provenance.tag' manifests/client-candidate.json)"
+          rails_tag_object="$(jq -r '.clients["opencode-rails"].tag_provenance.annotated_tag_object' manifests/client-candidate.json)"
+          if ! [[ "$ruby_ref" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "opencode-ruby candidate ref must be a full 40-hex commit" >&2
+            exit 2
           fi
+          if ! [[ "$rails_ref" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "opencode-rails candidate ref must be a full 40-hex commit" >&2
+            exit 2
+          fi
+          if ! [[ "$ruby_tag_object" =~ ^[0-9a-f]{40}$ && "$rails_tag_object" =~ ^[0-9a-f]{40}$ ]]; then
+            echo "candidate annotated tag objects must be full 40-hex object IDs" >&2
+            exit 2
+          fi
+          test "$ruby_tag" = "v$ruby_version"
+          test "$rails_tag" = "v$rails_version"
+          test "$ruby_version" = "$rails_version"
+          echo "ruby_ref=$ruby_ref" >> "$GITHUB_OUTPUT"
+          echo "ruby_version=$ruby_version" >> "$GITHUB_OUTPUT"
+          echo "ruby_tag=$ruby_tag" >> "$GITHUB_OUTPUT"
+          echo "ruby_tag_object=$ruby_tag_object" >> "$GITHUB_OUTPUT"
+          echo "rails_ref=$rails_ref" >> "$GITHUB_OUTPUT"
+          echo "rails_version=$rails_version" >> "$GITHUB_OUTPUT"
+          echo "rails_tag=$rails_tag" >> "$GITHUB_OUTPUT"
+          echo "rails_tag_object=$rails_tag_object" >> "$GITHUB_OUTPUT"
 
   fixture-contract:
     needs: prepare
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-ruby
-          ref: ${{ needs.prepare.outputs.client_ref }}
-          path: client
-      - uses: ruby/setup-ruby@v1
+          ref: ${{ needs.prepare.outputs.ruby_ref }}
+          path: ruby-client
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
           bundler-cache: true
-          working-directory: client
+          working-directory: ruby-client
+      - id: client-sha
+        name: Verify immutable Ruby candidate checkout
+        env:
+          EXPECTED_CLIENT_SHA: ${{ needs.prepare.outputs.ruby_ref }}
+        run: |
+          actual_client_sha="$(git -C ruby-client rev-parse HEAD)"
+          test "$actual_client_sha" = "$EXPECTED_CLIENT_SHA"
+          echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
       - name: Candidate unit tests
-        working-directory: client
+        working-directory: ruby-client
         run: bundle exec rake test
       - name: Shared fixture contract
-        working-directory: client
+        working-directory: ruby-client
         env:
-          OPENCODE_RUBY_PATH: ${{ github.workspace }}/client
-          OPENCODE_RUBY_COMMIT: ${{ needs.prepare.outputs.client_ref }}
-        run: bundle exec ruby ../ruby/opencode_ruby_fixture_contract.rb
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
+          OPENCODE_RUBY_COMMIT: ${{ steps.client-sha.outputs.value }}
+          OPENCODE_COMPAT_EVIDENCE_PATH: ${{ github.workspace }}/.compat-evidence/ruby-fixtures.json
+          OPENCODE_COMPAT_RUN_ID: ${{ github.run_id }}
+          OPENCODE_COMPAT_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OPENCODE_COMPAT_HEAD_SHA: ${{ github.sha }}
+          OPENCODE_COMPAT_REPOSITORY: ${{ github.repository }}
+          OPENCODE_COMPAT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p ../.compat-evidence
+          bundle exec ruby ../ruby/opencode_ruby_fixture_contract.rb
+      - name: Upload fixture evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: ruby-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .compat-evidence/ruby-fixtures.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
+
+  lockstep-client-contract:
+    needs: prepare
+    runs-on: ubuntu-latest
+    strategy:
+      fail-fast: false
+      matrix:
+        ruby: ["3.2", "3.3", "3.4"]
+    name: lockstep clients Ruby ${{ matrix.ruby }}
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ajaynomics/opencode-ruby
+          ref: ${{ needs.prepare.outputs.ruby_ref }}
+          path: ruby-client
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ajaynomics/opencode-rails
+          ref: ${{ needs.prepare.outputs.rails_ref }}
+          path: opencode-rails
+          fetch-depth: 0
+          fetch-tags: true
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
+        with:
+          ruby-version: ${{ matrix.ruby }}
+          bundler-cache: true
+          working-directory: opencode-rails
+      - name: Verify immutable candidate checkouts
+        env:
+          EXPECTED_RUBY_SHA: ${{ needs.prepare.outputs.ruby_ref }}
+          EXPECTED_RAILS_SHA: ${{ needs.prepare.outputs.rails_ref }}
+        run: |
+          test "$(git -C ruby-client rev-parse HEAD)" = "$EXPECTED_RUBY_SHA"
+          test "$(git -C opencode-rails rev-parse HEAD)" = "$EXPECTED_RAILS_SHA"
+      - name: Rails candidate unit tests
+        working-directory: opencode-rails
+        run: bundle exec rake test
+      - name: Lockstep client provenance contract
+        working-directory: opencode-rails
+        env:
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
+          OPENCODE_RAILS_PATH: ${{ github.workspace }}/opencode-rails
+          OPENCODE_RUBY_COMMIT: ${{ needs.prepare.outputs.ruby_ref }}
+          OPENCODE_RUBY_TAG: ${{ needs.prepare.outputs.ruby_tag }}
+          OPENCODE_RUBY_TAG_OBJECT: ${{ needs.prepare.outputs.ruby_tag_object }}
+          OPENCODE_RAILS_COMMIT: ${{ needs.prepare.outputs.rails_ref }}
+          OPENCODE_RAILS_TAG: ${{ needs.prepare.outputs.rails_tag }}
+          OPENCODE_RAILS_TAG_OBJECT: ${{ needs.prepare.outputs.rails_tag_object }}
+          OPENCODE_RUBY_VERSION: ${{ needs.prepare.outputs.ruby_version }}
+          OPENCODE_RAILS_VERSION: ${{ needs.prepare.outputs.rails_version }}
+          OPENCODE_COMPAT_EVIDENCE_PATH: ${{ github.workspace }}/.compat-evidence/lockstep-ruby-${{ matrix.ruby }}.json
+          OPENCODE_COMPAT_RUN_ID: ${{ github.run_id }}
+          OPENCODE_COMPAT_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OPENCODE_COMPAT_HEAD_SHA: ${{ github.sha }}
+          OPENCODE_COMPAT_REPOSITORY: ${{ github.repository }}
+          OPENCODE_COMPAT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p ../.compat-evidence
+          bundle exec ruby ../ruby/lockstep_client_contract.rb
+      - name: Upload lockstep evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: lockstep-ruby-${{ matrix.ruby }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .compat-evidence/lockstep-ruby-${{ matrix.ruby }}.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30
 
   exact-image-contract:
     needs: prepare
@@ -74,20 +206,56 @@ jobs:
       matrix: ${{ fromJSON(needs.prepare.outputs.matrix) }}
     name: image ${{ matrix.id }}
     steps:
-      - uses: actions/checkout@v4
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
         with:
           repository: ajaynomics/opencode-ruby
-          ref: ${{ needs.prepare.outputs.client_ref }}
-          path: client
-      - uses: ruby/setup-ruby@v1
+          ref: ${{ needs.prepare.outputs.ruby_ref }}
+          path: ruby-client
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
-          bundler-cache: true
-          working-directory: client
+      - name: Install candidate dependencies outside the checkout
+        working-directory: ruby-client
+        env:
+          BUNDLE_APP_CONFIG: ${{ runner.temp }}/opencode-ruby-bundle-config
+          BUNDLE_PATH: ${{ runner.temp }}/opencode-ruby-bundle
+        run: bundle install --jobs 4 --retry 3
+      - id: client-sha
+        name: Verify immutable Ruby candidate checkout
+        env:
+          EXPECTED_CLIENT_SHA: ${{ needs.prepare.outputs.ruby_ref }}
+        run: |
+          actual_client_sha="$(git -C ruby-client rev-parse HEAD)"
+          test "$actual_client_sha" = "$EXPECTED_CLIENT_SHA"
+          echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
       - name: Exercise complete REST and SSE turn
         env:
-          BUNDLE_GEMFILE: ${{ github.workspace }}/client/Gemfile
+          BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile
+          BUNDLE_APP_CONFIG: ${{ runner.temp }}/opencode-ruby-bundle-config
+          BUNDLE_PATH: ${{ runner.temp }}/opencode-ruby-bundle
           OPENCODE_IMAGE: ${{ matrix.image }}
-          OPENCODE_RUBY_PATH: ${{ github.workspace }}/client
-        run: bundle exec scripts/run_image_contract.sh
+          OPENCODE_EXPECTED_VERSION: ${{ matrix.version }}
+          OPENCODE_MATRIX_ID: ${{ matrix.id }}
+          OPENCODE_REQUIRED_CONSUMER_PROFILES: ${{ toJSON(matrix.required_consumer_profiles) }}
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
+          OPENCODE_RUBY_COMMIT: ${{ steps.client-sha.outputs.value }}
+          OPENCODE_RAILS_COMMIT: ${{ needs.prepare.outputs.rails_ref }}
+          OPENCODE_COMPAT_EVIDENCE_PATH: ${{ github.workspace }}/.compat-evidence/${{ matrix.id }}.json
+          OPENCODE_COMPAT_RUN_ID: ${{ github.run_id }}
+          OPENCODE_COMPAT_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OPENCODE_COMPAT_HEAD_SHA: ${{ github.sha }}
+          OPENCODE_COMPAT_REPOSITORY: ${{ github.repository }}
+          OPENCODE_COMPAT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: |
+          mkdir -p .compat-evidence
+          bundle exec scripts/run_image_contract.sh
+      - name: Upload exact-image evidence
+        if: always()
+        uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
+        with:
+          name: image-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
+          path: .compat-evidence/${{ matrix.id }}.json
+          include-hidden-files: true
+          if-no-files-found: warn
+          retention-days: 30

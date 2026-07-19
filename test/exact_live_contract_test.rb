@@ -26,4 +26,14 @@ class ExactLiveContractTest < Minitest::Test
       end
     end
   end
+
+  def test_accepts_only_one_authoritative_assistant_message
+    assert_nil OpenCodeCompat::ExactLiveContract.assert_authoritative_assistant_count!(1)
+
+    [0, 2, "not-a-number"].each do |count|
+      assert_raises(OpenCodeCompat::ExactLiveContract::ContractError) do
+        OpenCodeCompat::ExactLiveContract.assert_authoritative_assistant_count!(count)
+      end
+    end
+  end
 end

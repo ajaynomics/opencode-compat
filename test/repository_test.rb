@@ -42,7 +42,9 @@ class RepositoryTest < Minitest::Test
     targets.each do |target|
       assert_match %r{\Aghcr\.io/anomalyco/opencode@sha256:[0-9a-f]{64}\z}, target.fetch("image")
       refute_includes target.fetch("image"), ":latest"
-      refute_empty target.fetch("profiles")
+      assert_equal ["ruby-rest-sse"], target.fetch("profiles")
+      assert_equal "shared-client-contract-only",
+        target.fetch("certification_scope", "shared-client-contract-only")
       next unless target.fetch("certification_status") == "certified"
 
       assert_match(/\A[0-9a-f]{40}\z/, target.fetch("certified_client_commit"))
@@ -51,14 +53,28 @@ class RepositoryTest < Minitest::Test
     end
   end
 
-  def test_candidate_is_bound_to_an_annotated_tag
+  def test_candidate_client_train_is_lockstep_and_bound_to_annotated_tags
     candidate = json("manifests/client-candidate.json")
-    provenance = candidate.fetch("tag_provenance")
+    clients = candidate.fetch("clients")
+    release_train = candidate.fetch("release_train")
 
-    assert_match(/\A[0-9a-f]{40}\z/, candidate.fetch("ref"))
-    assert_match(/\Av\d+\.\d+\.\d+\.alpha\d+\z/, provenance.fetch("tag"))
-    assert_match(/\A[0-9a-f]{40}\z/, provenance.fetch("annotated_tag_object"))
-    assert_equal candidate.fetch("ref"), provenance.fetch("peeled_commit")
+    assert_equal 2, candidate.fetch("schema_version")
+    assert_equal "candidate", candidate.fetch("status")
+    assert_equal %w[opencode-rails opencode-ruby], clients.keys.sort
+
+    clients.each do |name, client|
+      provenance = client.fetch("tag_provenance")
+      assert_equal "ajaynomics/#{name}", client.fetch("repository")
+      assert_equal release_train, client.fetch("version")
+      assert_match(/\A[0-9a-f]{40}\z/, client.fetch("ref"))
+      assert_equal "v#{release_train}", provenance.fetch("tag")
+      assert_match(/\A[0-9a-f]{40}\z/, provenance.fetch("annotated_tag_object"))
+      assert_equal client.fetch("ref"), provenance.fetch("peeled_commit")
+    end
+
+    dependency = clients.fetch("opencode-rails").fetch("runtime_dependencies").fetch("opencode-ruby")
+    assert_equal "= #{release_train}", dependency.fetch("requirement")
+    assert_equal clients.fetch("opencode-ruby").fetch("ref"), dependency.fetch("ref")
   end
 
   def test_certified_migration_keeps_previous_tuple
@@ -147,6 +163,62 @@ class RepositoryTest < Minitest::Test
     refute_match(/\b(kamal|kubectl|helm|nomad|docker\s+service)\b/i, workflow)
   end
 
+  def test_workflow_actions_are_pinned_to_exact_commits
+    workflows = Dir.glob(File.join(ROOT, ".github/workflows/*.{yml,yaml}"))
+    refute_empty workflows
+
+    workflows.each do |path|
+      File.foreach(path).with_index(1) do |line, number|
+        next unless (match = line.match(/\buses:\s+[^\s@]+@([^\s#]+)/))
+
+        assert_match(/\A[0-9a-f]{40}\z/, match[1], "#{path}:#{number} must pin an exact action commit")
+      end
+    end
+  end
+
+  def test_workflow_actions_use_reviewed_node24_compatible_pins
+    expected = {
+      "actions/checkout" => "9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0",
+      "actions/upload-artifact" => "043fb46d1a93c77aae656e7c1c64a875d1fc6a0a",
+      "ruby/setup-ruby" => "003a5c4d8d6321bd302e38f6f0ec593f77f06600"
+    }
+    observed = Hash.new { |hash, key| hash[key] = [] }
+
+    Dir.glob(File.join(ROOT, ".github/workflows/*.{yml,yaml}")).each do |path|
+      File.read(path).scan(/\buses:\s+([^\s@]+)@([0-9a-f]{40})/) do |action, commit|
+        observed[action] << commit if expected.key?(action)
+      end
+    end
+
+    expected.each do |action, commit|
+      refute_empty observed.fetch(action), "expected at least one #{action} use"
+      assert_equal [commit], observed.fetch(action).uniq, "#{action} must stay on the reviewed Node 24 pin"
+    end
+  end
+
+  def test_candidate_workflow_verifies_and_preserves_the_lockstep_client_tuple
+    workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
+
+    refute_includes workflow, "inputs.opencode_ruby_ref"
+    refute_includes workflow, "inputs.opencode_rails_ref"
+    assert_includes workflow, "repository: ajaynomics/opencode-ruby"
+    assert_includes workflow, "repository: ajaynomics/opencode-rails"
+    assert_includes workflow, "path: opencode-rails"
+    assert_includes workflow, "ruby: [\"3.2\", \"3.3\", \"3.4\"]"
+    assert_includes workflow, "ruby/lockstep_client_contract.rb"
+    assert_includes workflow, "OPENCODE_RUBY_TAG_OBJECT"
+    assert_includes workflow, "OPENCODE_RAILS_TAG_OBJECT"
+    assert_operator workflow.scan("fetch-tags: true").length, :>=, 2
+    assert_operator workflow.scan("actions/upload-artifact@").length, :>=, 3
+    assert_includes workflow, "OPENCODE_COMPAT_EVIDENCE_PATH"
+    assert_includes workflow, "OPENCODE_REQUIRED_CONSUMER_PROFILES"
+    assert_includes workflow, 'BUNDLE_PATH: ${{ runner.temp }}/opencode-ruby-bundle'
+    assert_includes workflow, "Install candidate dependencies outside the checkout"
+    refute_includes workflow, "OPENCODE_MATRIX_PROFILES"
+    refute_includes workflow, "OPENCODE_CERTIFICATION_SCOPE"
+    refute_match(/\b(kamal|kubectl|helm|nomad|docker\s+service|gh\s+pr\s+merge)\b/i, workflow)
+  end
+
   def test_tuple_promotion_has_no_command_execution_or_deployment_client
     paths = %w[
       lib/opencode_compat/runtime_tuple_promoter.rb
@@ -164,8 +236,11 @@ class RepositoryTest < Minitest::Test
     runner = File.read(File.join(ROOT, "scripts/run_image_contract.sh"))
 
     assert_includes probe, "ExactLiveContract.assert_final_text!"
+    assert_includes probe, "ExactLiveContract.assert_authoritative_assistant_count!"
     refute_includes probe, "full_text.include?"
     assert_includes runner, "exact_live_contract.rb"
+    assert_includes runner, "OPENCODE_COMPAT_EVIDENCE_PATH"
+    assert_includes runner, "OPENCODE_EXPECTED_VERSION"
     refute_match(/request_count.*-lt\s+1/, runner)
   end
 end

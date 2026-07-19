@@ -9,11 +9,14 @@ commit. Changing any member invalidates the certification.
 The gate requires:
 
 1. repository validation and the shared fixture corpus;
-2. the public exact-image matrix against the deterministic model stub;
-3. an isolated custom-image canary for Ajent Rails and Mushu;
-4. the consumer's own focused and full required tests in its devcontainer;
-5. a user-visible canary turn for stream consumers;
-6. captured evidence including image ID/digest, server version, source commit,
+2. exact `opencode-ruby` and `opencode-rails` candidate checkouts, all Rails
+   candidate tests on Ruby 3.2 through 3.4, an exact Rails-to-Ruby runtime
+   dependency, and loaded Bundler provenance for the Ruby commit;
+3. the public exact-image matrix against the deterministic model stub;
+4. an isolated custom-image canary for Ajent Rails and Mushu;
+5. the consumer's own focused and full required tests in its devcontainer;
+6. a user-visible canary turn for stream consumers;
+7. captured evidence including image ID/digest, server version, source commit,
    gem commits, timestamps, and probe outcome.
 
 Health-only probes do not certify a tuple.
@@ -94,6 +97,19 @@ certify Rails persistence, plugin hooks, voice streaming, strict route gates,
 or provider hooks. Those appear as `required_consumer_profiles` in the image
 matrix and need their own consumer evidence before a full tuple can pass.
 
+The companion lockstep job proves that the exact Rails candidate loads and
+tests against the exact Ruby candidate on every supported Ruby version. That
+still does not certify a consumer's ActiveRecord schema, persistence callbacks,
+container adapter, or application canary; those remain consumer-owned profile
+evidence.
+
+CI writes canonical JSON artifacts for the shared fixture, lockstep client, and
+each exact-image target. Artifact retention is 30 days and supplies reviewable
+workflow provenance; it is not the long-term ledger. After review, copy the
+relevant facts into a repository evidence document bound to the complete tuple
+fingerprint. Automated workflows never update certified evidence or promote a
+tuple.
+
 The command clears `candidate` after promotion. It sets the repository-wide
 `migration_state` to `certified` only after every consumer has certified
 `current` and `previous` tuples and no pending candidate.
@@ -112,6 +128,15 @@ have real passing evidence can the manifest honestly contain certified
 `current` and `previous` tuples. Until then, `promotion_readiness` remains
 blocked and the candidate PR must not be treated as a deploy authorization.
 
+The schema-v1 promotion command deliberately cannot perform the first degraded
+bootstrap transition when `current` is a known-failing baseline. Do not bypass
+that guard by hand-editing the manifest or relabeling alpha2 evidence. A
+separate reviewed state-machine change must first add an explicit
+`bootstrap-current-only` state that preserves the failed baseline as
+uncertified emergency provenance and leaves `previous` null. Itemized rollback
+certification is complete only after a later, materially distinct passing tuple
+can move the first certified current into `previous`.
+
 ## Rollback
 
 Rollback restores the whole `previous` tuple. Do not roll back only the gem or
@@ -125,10 +150,16 @@ the source commit used to build it. A source tag alone is insufficient.
 Run the shared live contract on a host that can pull the exact image:
 
 ```sh
+BUNDLE_GEMFILE=/path/to/opencode-ruby/Gemfile \
 OPENCODE_RUBY_PATH=/path/to/opencode-ruby \
+OPENCODE_RUBY_COMMIT=FULL_40_HEX_COMMIT \
 OPENCODE_IMAGE='registry.example/image@sha256:...' \
-scripts/run_image_contract.sh
+bundle exec scripts/run_image_contract.sh
 ```
+
+The Ruby checkout must be clean and its `HEAD` must equal
+`OPENCODE_RUBY_COMMIT`. Install Bundler dependencies outside that checkout when
+the normal cache path would create untracked files.
 
 If an older private registry cannot expose an OCI repository digest, set
 `ALLOW_EXACT_IMAGE_ID=1` and pass the locally present `sha256:...` image ID.
