@@ -12,9 +12,18 @@ class MatrixJsonTest < Minitest::Test
 
   def setup
     @tmp = Dir.mktmpdir("opencode-matrix-json")
+    FileUtils.mkdir_p(File.join(@tmp, "lib/opencode_compat"))
     FileUtils.mkdir_p(File.join(@tmp, "scripts"))
     FileUtils.mkdir_p(File.join(@tmp, "manifests"))
     FileUtils.cp(File.join(ROOT, "scripts/matrix_json.rb"), File.join(@tmp, "scripts"))
+    FileUtils.cp(
+      File.join(ROOT, "lib/opencode_compat/client_candidate.rb"),
+      File.join(@tmp, "lib/opencode_compat")
+    )
+    FileUtils.cp(
+      File.join(ROOT, "manifests/client-candidate.json"),
+      File.join(@tmp, "manifests")
+    )
     @manifest = JSON.parse(File.read(File.join(ROOT, "manifests/image-matrix.json")))
   end
 
@@ -48,6 +57,32 @@ class MatrixJsonTest < Minitest::Test
 
     refute status.success?
     assert_match(/certification_scope must be shared-client-contract-only/, error)
+  end
+
+  def test_rejects_a_matrix_bound_to_another_client_candidate
+    @manifest.fetch("client_candidate")["opencode_ruby_commit"] = "f" * 40
+
+    _output, error, status = run_matrix(@manifest)
+
+    refute status.success?
+    assert_match(/must equal the exact client candidate/, error)
+  end
+
+  def test_allows_reviewed_candidate_certification_without_changing_coordinates
+    @manifest.fetch("client_candidate")["certification_status"] = "certified"
+
+    _output, error, status = run_matrix(@manifest)
+
+    assert status.success?, error
+  end
+
+  def test_rejects_unknown_candidate_certification_status
+    @manifest.fetch("client_candidate")["certification_status"] = "deployed"
+
+    _output, error, status = run_matrix(@manifest)
+
+    refute status.success?
+    assert_match(/certification_status must be pending or certified/, error)
   end
 
   private

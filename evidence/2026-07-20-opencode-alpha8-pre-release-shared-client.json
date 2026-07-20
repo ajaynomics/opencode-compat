@@ -1,0 +1,103 @@
+{
+  "schema_version": 1,
+  "kind": "pre-release-client-image-review-input",
+  "status": "pass",
+  "certification_status": "not-certified",
+  "publication_state": "unpublished",
+  "coverage_scope": "shared-client-contract-only",
+  "clients": {
+    "opencode_ruby": {
+      "version": "0.0.1.alpha8",
+      "commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      "executed": true
+    },
+    "opencode_rails": {
+      "version": "0.0.1.alpha8",
+      "commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+      "executed_by_image_contract": false
+    }
+  },
+  "checks": [
+    {
+      "id": "upstream-1.16.1",
+      "checked_at": "2026-07-20T05:38:34Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "docker_image_id": "sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "platform": "linux/amd64",
+      "reported_version": "1.16.1",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn"]
+    },
+    {
+      "id": "upstream-1.17.18",
+      "checked_at": "2026-07-20T05:39:06Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "docker_image_id": "sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "platform": "linux/amd64",
+      "reported_version": "1.17.18",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["plugin-ledger"]
+    },
+    {
+      "id": "upstream-1.18.3",
+      "checked_at": "2026-07-20T05:39:18Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "docker_image_id": "sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "platform": "linux/amd64",
+      "reported_version": "1.18.3",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"]
+    },
+    {
+      "id": "ajent-blackline-alpha8-shared-contract",
+      "checked_at": "2026-07-20T05:39:57Z",
+      "image": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+      "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
+      "platform": "linux/amd64",
+      "reported_version": "1.18.3",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"]
+    },
+    {
+      "id": "mushu-permission-shortcuts-alpha8-shared-contract",
+      "checked_at": "2026-07-20T05:40:08Z",
+      "image": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+      "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+      "platform": "linux/amd64",
+      "reported_version": "0.0.0-permission-shortcuts-202606300721",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": []
+    }
+  ],
+  "limitations": [
+    "This local evidence has no GitHub workflow run provenance and is review input only.",
+    "The exact-image contract executed opencode-ruby but did not execute opencode-rails.",
+    "Rails persistence, plugin-ledger, consumer application, deployment, and user-visible canary profiles remain unverified.",
+    "No runtime tuple was promoted and no consumer was deployed."
+  ]
+}

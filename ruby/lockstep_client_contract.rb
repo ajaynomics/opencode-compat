@@ -8,18 +8,30 @@ require "rubygems"
 module OpenCodeCompat
   class LockstepClientContract
     class ContractError < StandardError; end
+    class GitCommandError < ContractError
+      attr_reader :exitstatus
+
+      def initialize(message, exitstatus:)
+        @exitstatus = exitstatus
+        super(message)
+      end
+    end
 
     CONTRACT_NAME = "opencode-client-lockstep"
+    OPENCODE_RUBY_GIT_URI = "https://github.com/ajaynomics/opencode-ruby.git"
+    PUBLICATION_PROVENANCE = {
+      "published" => "annotated-tag",
+      "unpublished" => "commit"
+    }.freeze
     REQUIRED_ENV = %w[
+      OPENCODE_CLIENT_PUBLICATION_STATE
       OPENCODE_RUBY_PATH
       OPENCODE_RUBY_COMMIT
-      OPENCODE_RUBY_TAG
-      OPENCODE_RUBY_TAG_OBJECT
+      OPENCODE_RUBY_PROVENANCE_KIND
       OPENCODE_RUBY_VERSION
       OPENCODE_RAILS_PATH
       OPENCODE_RAILS_COMMIT
-      OPENCODE_RAILS_TAG
-      OPENCODE_RAILS_TAG_OBJECT
+      OPENCODE_RAILS_PROVENANCE_KIND
       OPENCODE_RAILS_VERSION
     ].freeze
 
@@ -87,22 +99,25 @@ module OpenCodeCompat
       rails_commit = exact_commit("OPENCODE_RAILS_COMMIT")
       expected_ruby_version = exact_version("OPENCODE_RUBY_VERSION")
       expected_rails_version = exact_version("OPENCODE_RAILS_VERSION")
+      publication_state = exact_publication_state
 
       assert_equal!(ruby_commit, checkout_head(ruby_path, "opencode-ruby"), "opencode-ruby checkout commit")
       assert_equal!(rails_commit, checkout_head(rails_path, "opencode-rails"), "opencode-rails checkout commit")
-      ruby_tag_provenance = annotated_tag_provenance(
+      ruby_source_provenance = source_provenance(
         path: ruby_path,
         label: "opencode-ruby",
-        tag_name: "OPENCODE_RUBY_TAG",
-        tag_object: "OPENCODE_RUBY_TAG_OBJECT",
-        expected_commit: ruby_commit
+        prefix: "OPENCODE_RUBY",
+        publication_state: publication_state,
+        expected_commit: ruby_commit,
+        expected_version: expected_ruby_version
       )
-      rails_tag_provenance = annotated_tag_provenance(
+      rails_source_provenance = source_provenance(
         path: rails_path,
         label: "opencode-rails",
-        tag_name: "OPENCODE_RAILS_TAG",
-        tag_object: "OPENCODE_RAILS_TAG_OBJECT",
-        expected_commit: rails_commit
+        prefix: "OPENCODE_RAILS",
+        publication_state: publication_state,
+        expected_commit: rails_commit,
+        expected_version: expected_rails_version
       )
       assert_equal!(expected_ruby_version, @ruby_version, "loaded Opencode::VERSION")
       assert_equal!(expected_rails_version, @rails_version, "loaded Opencode::RAILS_VERSION")
@@ -117,36 +132,45 @@ module OpenCodeCompat
       dependency = exact_runtime_dependency!(rails_spec, expected_ruby_version)
       bundle_spec = bundled_ruby_spec!
       source = bundle_spec.source
-      unless source && source.respond_to?(:revision) && source.class.name.match?(/(?:\A|::)Git\z/)
+      unless source && source.respond_to?(:revision) && source.respond_to?(:ref) && source.respond_to?(:uri) &&
+          source.class.name.match?(/(?:\A|::)Git\z/)
         raise ContractError, "Bundler opencode-ruby source must be a Git source"
       end
 
       bundler_revision = source.revision.to_s
+      bundler_ref = source.ref.to_s
+      bundler_uri = source.uri.to_s
       assert_exact_commit!(bundler_revision, "Bundler opencode-ruby revision")
+      assert_exact_commit!(bundler_ref, "Bundler opencode-ruby ref")
       assert_equal!(ruby_commit, bundler_revision, "Bundler opencode-ruby revision")
+      assert_equal!(ruby_commit, bundler_ref, "Bundler opencode-ruby ref")
+      assert_equal!(OPENCODE_RUBY_GIT_URI, bundler_uri, "Bundler opencode-ruby URI")
 
       {
         "contract" => CONTRACT_NAME,
+        "publication_state" => publication_state,
         "opencode_rails" => {
           "checkout_commit" => rails_commit,
           "gem_version" => rails_spec.version.to_s,
           "loaded_version" => @rails_version,
-          "tag_provenance" => rails_tag_provenance,
+          "source_provenance" => rails_source_provenance,
           "runtime_dependency" => {
             "name" => dependency.name,
             "requirement" => dependency.requirement.to_s
           }
         },
         "opencode_ruby" => {
+          "bundler_git_ref" => bundler_ref,
           "bundler_git_revision" => bundler_revision,
+          "bundler_git_uri" => bundler_uri,
           "bundler_source" => source.class.name,
           "checkout_commit" => ruby_commit,
           "gem_version" => ruby_spec.version.to_s,
           "loaded_version" => @ruby_version,
-          "tag_provenance" => ruby_tag_provenance
+          "source_provenance" => ruby_source_provenance
         },
         "ruby_runtime_version" => @runtime_ruby_version,
-        "schema_version" => 1,
+        "schema_version" => 2,
         "status" => "pass",
         "workflow" => {
           "head_sha" => @env["OPENCODE_COMPAT_HEAD_SHA"],
@@ -194,13 +218,24 @@ module OpenCodeCompat
       value
     end
 
+    def exact_publication_state
+      value = @env.fetch("OPENCODE_CLIENT_PUBLICATION_STATE")
+      return value if PUBLICATION_PROVENANCE.key?(value)
+
+      raise ContractError,
+        "OPENCODE_CLIENT_PUBLICATION_STATE must be one of #{PUBLICATION_PROVENANCE.keys.join(', ')}, got #{value.inspect}"
+    end
+
     def exact_tag(name)
-      value = @env.fetch(name)
+      exact_tag_value(@env.fetch(name), name)
+    end
+
+    def exact_tag_value(value, label)
       if value.match?(/\A[A-Za-z0-9][A-Za-z0-9._-]*\z/) && !value.include?("..") && !value.end_with?(".")
         return value
       end
 
-      raise ContractError, "#{name} must be a safe exact Git tag name, got #{value.inspect}"
+      raise ContractError, "#{label} must be a safe exact Git tag name, got #{value.inspect}"
     end
 
     def exact_tag_object(name)
@@ -236,6 +271,55 @@ module OpenCodeCompat
       raise
     rescue StandardError => error
       raise ContractError, "could not resolve #{label} checkout HEAD: #{error.message}"
+    end
+
+    def source_provenance(path:, label:, prefix:, publication_state:, expected_commit:, expected_version:)
+      kind_name = "#{prefix}_PROVENANCE_KIND"
+      kind = @env.fetch(kind_name)
+      expected_kind = PUBLICATION_PROVENANCE.fetch(publication_state)
+      assert_equal!(expected_kind, kind, "#{label} provenance kind for #{publication_state} candidate")
+
+      case kind
+      when "commit"
+        ensure_unpublished_tag_absent!(path, label, expected_version)
+        supplied_tag_fields = %W[#{prefix}_TAG #{prefix}_TAG_OBJECT].select do |name|
+          !@env[name].to_s.empty?
+        end
+        unless supplied_tag_fields.empty?
+          raise ContractError,
+            "#{label} unpublished commit provenance must not supply #{supplied_tag_fields.join(', ')}"
+        end
+
+        {"commit" => expected_commit, "kind" => "commit"}
+      when "annotated-tag"
+        annotated_tag_provenance(
+          path: path,
+          label: label,
+          tag_name: "#{prefix}_TAG",
+          tag_object: "#{prefix}_TAG_OBJECT",
+          expected_commit: expected_commit
+        ).merge("kind" => "annotated-tag")
+      else
+        raise ContractError, "#{kind_name} has unsupported value #{kind.inspect}"
+      end
+    end
+
+    def ensure_unpublished_tag_absent!(path, label, expected_version)
+      tag = exact_tag_value("v#{expected_version}", "#{label} expected release tag")
+      tag_ref = "refs/tags/#{tag}"
+      resolved = begin
+        @git_resolver.call(path, "rev-parse", "--verify", "--quiet", tag_ref).to_s.strip
+      rescue GitCommandError => error
+        raise ContractError, "could not check #{label} release tag: #{error.message}" unless error.exitstatus == 1
+
+        nil
+      rescue KeyError
+        nil
+      end
+      return if resolved.nil? || resolved.empty?
+
+      raise ContractError,
+        "#{label} release tag #{tag} already exists; publication_state must be published with annotated-tag provenance"
     end
 
     def annotated_tag_provenance(path:, label:, tag_name:, tag_object:, expected_commit:)
@@ -277,7 +361,7 @@ module OpenCodeCompat
 
       detail = stderr.strip
       detail = "git exited #{status.exitstatus}" if detail.empty?
-      raise ContractError, detail
+      raise GitCommandError.new(detail, exitstatus: status.exitstatus)
     end
 
     def loaded_spec!(name)
@@ -324,7 +408,7 @@ if $PROGRAM_NAME == __FILE__
     failure = OpenCodeCompat::LockstepClientContract.canonical_json(
       "contract" => OpenCodeCompat::LockstepClientContract::CONTRACT_NAME,
       "error" => "#{error.class}: #{error.message}",
-      "schema_version" => 1,
+      "schema_version" => 2,
       "status" => "fail"
     )
     if (evidence_path = ENV["OPENCODE_COMPAT_EVIDENCE_PATH"]) && !evidence_path.empty?

@@ -1,9 +1,27 @@
 # frozen_string_literal: true
 
 require "json"
+require_relative "../lib/opencode_compat/client_candidate"
 
 root = File.expand_path("..", __dir__)
 manifest = JSON.parse(File.read(File.join(root, "manifests/image-matrix.json")))
+candidate = OpenCodeCompat::ClientCandidate.load(File.join(root, "manifests/client-candidate.json"))
+candidate.verify!
+clients = candidate.document.fetch("clients")
+expected_candidate = {
+  "release_train" => candidate.document.fetch("release_train"),
+  "publication_state" => candidate.document.fetch("publication_state"),
+  "opencode_ruby_commit" => clients.dig("opencode-ruby", "ref"),
+  "opencode_rails_commit" => clients.dig("opencode-rails", "ref")
+}
+matrix_candidate = manifest.fetch("client_candidate")
+unless expected_candidate.all? { |key, value| matrix_candidate[key] == value }
+  abort "image matrix client_candidate must equal the exact client candidate"
+end
+unless %w[pending certified].include?(matrix_candidate.fetch("certification_status"))
+  abort "image matrix client_candidate certification_status must be pending or certified"
+end
+
 matrix = manifest.fetch("public_ci").map do |target|
   id = target.fetch("id")
   profiles = target.fetch("profiles")

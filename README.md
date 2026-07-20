@@ -8,11 +8,14 @@ prompts, credentials, sessions, or user data belong here.
 
 ## Policy
 
-- A gem release is a candidate until the fixture suite and every required image
-  profile pass.
+- An unpublished gem build is a candidate until the fixture suite and every
+  required image profile pass. It is identified only by an exact commit.
 - `opencode-ruby` and `opencode-rails` are one candidate release train. The
-  manifest records both peeled commits, and CI rejects a Rails candidate whose
+  manifest records both exact commits, and CI rejects a Rails candidate whose
   exact runtime dependency resolves to a different Ruby version or commit.
+- Once a train is published, commit-only provenance is no longer accepted. The
+  manifest and lockstep contract require each annotated tag object, local tag
+  ref, and peeled commit to bind to the tested checkout.
 - Image references are immutable OCI index digests. A tag may be recorded as
   human-readable provenance, but it is never an execution coordinate.
 - Custom consumer images are certified with an isolated canary on the host that
@@ -50,23 +53,23 @@ ruby test/repository_test.rb
 ruby test/runtime_tuple_promoter_test.rb
 ruby test/exact_live_contract_test.rb
 ruby test/watcher_test.rb
-OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-78b6f9c9e9c7d58b699af1c3c17764acd33de798 \
+ruby test/client_candidate_test.rb
+OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-9277646a4bb2cf25a8384ffc140b154f49ea5766 \
   ruby ruby/opencode_ruby_fixture_contract.rb
 BUNDLE_GEMFILE=/path/to/opencode-rails/Gemfile \
 OPENCODE_RUBY_PATH=/path/to/opencode-ruby \
 OPENCODE_RAILS_PATH=/path/to/opencode-rails \
-OPENCODE_RUBY_COMMIT=FULL_40_HEX_COMMIT \
-OPENCODE_RUBY_TAG=v0.0.1.alpha7 \
-OPENCODE_RUBY_TAG_OBJECT=FULL_40_HEX_ANNOTATED_TAG_OBJECT \
-OPENCODE_RAILS_COMMIT=FULL_40_HEX_COMMIT \
-OPENCODE_RAILS_TAG=v0.0.1.alpha7 \
-OPENCODE_RAILS_TAG_OBJECT=FULL_40_HEX_ANNOTATED_TAG_OBJECT \
-OPENCODE_RUBY_VERSION=0.0.1.alpha7 \
-OPENCODE_RAILS_VERSION=0.0.1.alpha7 \
+OPENCODE_CLIENT_PUBLICATION_STATE=unpublished \
+OPENCODE_RUBY_COMMIT=9277646a4bb2cf25a8384ffc140b154f49ea5766 \
+OPENCODE_RUBY_PROVENANCE_KIND=commit \
+OPENCODE_RAILS_COMMIT=a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f \
+OPENCODE_RAILS_PROVENANCE_KIND=commit \
+OPENCODE_RUBY_VERSION=0.0.1.alpha8 \
+OPENCODE_RAILS_VERSION=0.0.1.alpha8 \
   bundle exec ruby ruby/lockstep_client_contract.rb
-BUNDLE_GEMFILE=/path/to/opencode-ruby-at-78b6f9c9e9c7d58b699af1c3c17764acd33de798/Gemfile \
-OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-78b6f9c9e9c7d58b699af1c3c17764acd33de798 \
-OPENCODE_RUBY_COMMIT=78b6f9c9e9c7d58b699af1c3c17764acd33de798 \
+BUNDLE_GEMFILE=/path/to/opencode-ruby-at-9277646a4bb2cf25a8384ffc140b154f49ea5766/Gemfile \
+OPENCODE_RUBY_PATH=/path/to/opencode-ruby-at-9277646a4bb2cf25a8384ffc140b154f49ea5766 \
+OPENCODE_RUBY_COMMIT=9277646a4bb2cf25a8384ffc140b154f49ea5766 \
 OPENCODE_IMAGE='ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a' \
   bundle exec scripts/run_image_contract.sh
 ```
@@ -84,6 +87,17 @@ evidence for 30 days. These artifacts are review inputs, not certification by
 themselves. A person must review a passing artifact and commit the durable
 certification document under `evidence/`; no workflow commits or promotes its
 own result.
+
+`manifests/image-matrix.json` binds the active pending matrix to both candidate
+commits. Its `previous_certification` entries preserve the last alpha7 result;
+they do not certify alpha8. Ajent and Mushu custom-image rows remain pending
+until their host canaries run against this exact pair.
+
+The checked-in alpha8 local exact-image result is explicitly marked
+`not-certified` and `shared-client-contract-only`. It proves the Ruby/SSE probe
+on the recorded image IDs but does not claim Rails, plugin, application, or
+deployment canary coverage; exact-head CI still supplies reviewable workflow
+provenance.
 
 ## Adding an upstream release
 

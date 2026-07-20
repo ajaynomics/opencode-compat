@@ -10,7 +10,7 @@ The gate requires:
 
 1. repository validation and the shared fixture corpus;
 2. exact `opencode-ruby` and `opencode-rails` candidate checkouts, all Rails
-   candidate tests on Ruby 3.2 through 3.4, an exact Rails-to-Ruby runtime
+   candidate tests on Ruby 3.2 through 4.0, an exact Rails-to-Ruby runtime
    dependency, and loaded Bundler provenance for the Ruby commit;
 3. the public exact-image matrix against the deterministic model stub;
 4. an isolated custom-image canary for Ajent Rails and Mushu;
@@ -20,6 +20,29 @@ The gate requires:
    gem commits, timestamps, and probe outcome.
 
 Health-only probes do not certify a tuple.
+
+### Client source provenance
+
+Before publication, `manifests/client-candidate.json` must use
+`publication_state: unpublished` and `kind: commit` for both clients. Each
+provenance commit must equal its full 40-character checkout ref, and the Rails
+Gemfile/runtime dependency must resolve the same exact Ruby commit and version.
+Commit-only evidence is candidate evidence; it is not proof of a gem release.
+The lockstep checkout fetches tags and fails unpublished mode if the matching
+`vVERSION` tag appears, forcing the manifest through the published gate.
+
+After publication, change the state to `published` and replace both commit
+provenance objects with `kind: annotated-tag`, the exact tag, annotated tag
+object ID, and peeled commit. The repository validator rejects a published
+commit-only candidate. The lockstep job additionally verifies that each local
+tag ref resolves to the declared annotated tag object and that both the object
+and ref peel to the tested checkout. This transition is a reviewed manifest
+change; CI does not create or publish tags.
+
+The image matrix's active candidate coordinates must equal the client manifest.
+Changing either commit resets the active matrix to `pending`. A
+`previous_certification` preserves historical evidence but does not certify the
+new candidate.
 
 The shared live probe is intentionally strict: `full_text` must equal the
 expected text byte-for-byte and the deterministic model must receive exactly

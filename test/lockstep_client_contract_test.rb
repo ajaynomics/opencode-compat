@@ -8,10 +8,12 @@ require_relative "../ruby/lockstep_client_contract"
 
 module LockstepClientContractTestSources
   class Git
-    attr_reader :revision
+    attr_reader :ref, :revision, :uri
 
-    def initialize(revision)
+    def initialize(revision, ref: revision, uri: OpenCodeCompat::LockstepClientContract::OPENCODE_RUBY_GIT_URI)
       @revision = revision
+      @ref = ref
+      @uri = uri
     end
   end
 
@@ -36,13 +38,16 @@ class LockstepClientContractTest < Minitest::Test
     Dir.mkdir(@ruby_path)
     Dir.mkdir(@rails_path)
     @env = {
+      "OPENCODE_CLIENT_PUBLICATION_STATE" => "published",
       "OPENCODE_RUBY_PATH" => @ruby_path,
       "OPENCODE_RUBY_COMMIT" => RUBY_COMMIT,
+      "OPENCODE_RUBY_PROVENANCE_KIND" => "annotated-tag",
       "OPENCODE_RUBY_TAG" => RUBY_TAG,
       "OPENCODE_RUBY_TAG_OBJECT" => RUBY_TAG_OBJECT,
       "OPENCODE_RUBY_VERSION" => VERSION,
       "OPENCODE_RAILS_PATH" => @rails_path,
       "OPENCODE_RAILS_COMMIT" => RAILS_COMMIT,
+      "OPENCODE_RAILS_PROVENANCE_KIND" => "annotated-tag",
       "OPENCODE_RAILS_TAG" => RAILS_TAG,
       "OPENCODE_RAILS_TAG_OBJECT" => RAILS_TAG_OBJECT,
       "OPENCODE_RAILS_VERSION" => VERSION
@@ -79,18 +84,88 @@ class LockstepClientContractTest < Minitest::Test
     assert_equal "#{expected_json}\n", output.string
     assert_equal "#{expected_json}\n", File.binread(evidence_path)
     assert_equal "pass", document.fetch("status")
+    assert_equal 2, document.fetch("schema_version")
+    assert_equal "published", document.fetch("publication_state")
     assert_equal RUBY_COMMIT, document.dig("opencode_ruby", "checkout_commit")
+    assert_equal RUBY_COMMIT, document.dig("opencode_ruby", "bundler_git_ref")
     assert_equal RUBY_COMMIT, document.dig("opencode_ruby", "bundler_git_revision")
-    assert_equal RUBY_TAG_OBJECT, document.dig("opencode_ruby", "tag_provenance", "annotated_tag_object")
-    assert_equal RUBY_COMMIT, document.dig("opencode_ruby", "tag_provenance", "peeled_commit")
-    assert_equal RUBY_TAG, document.dig("opencode_ruby", "tag_provenance", "tag")
+    assert_equal OpenCodeCompat::LockstepClientContract::OPENCODE_RUBY_GIT_URI,
+      document.dig("opencode_ruby", "bundler_git_uri")
+    assert_equal "annotated-tag", document.dig("opencode_ruby", "source_provenance", "kind")
+    assert_equal RUBY_TAG_OBJECT, document.dig("opencode_ruby", "source_provenance", "annotated_tag_object")
+    assert_equal RUBY_COMMIT, document.dig("opencode_ruby", "source_provenance", "peeled_commit")
+    assert_equal RUBY_TAG, document.dig("opencode_ruby", "source_provenance", "tag")
     assert_equal RAILS_COMMIT, document.dig("opencode_rails", "checkout_commit")
-    assert_equal RAILS_TAG_OBJECT, document.dig("opencode_rails", "tag_provenance", "annotated_tag_object")
-    assert_equal RAILS_COMMIT, document.dig("opencode_rails", "tag_provenance", "peeled_commit")
+    assert_equal RAILS_TAG_OBJECT, document.dig("opencode_rails", "source_provenance", "annotated_tag_object")
+    assert_equal RAILS_COMMIT, document.dig("opencode_rails", "source_provenance", "peeled_commit")
     assert_equal "= #{VERSION}", document.dig("opencode_rails", "runtime_dependency", "requirement")
     assert_equal RUBY_VERSION, document.fetch("ruby_runtime_version")
     assert_nil document.dig("workflow", "run_id")
     assert_equal expected_json, JSON.generate(JSON.parse(expected_json).sort.to_h)
+  end
+
+  def test_accepts_unpublished_commit_only_provenance_without_tag_lookup
+    use_commit_only_provenance!
+
+    document = contract.verify
+
+    assert_equal "unpublished", document.fetch("publication_state")
+    assert_equal({"commit" => RUBY_COMMIT, "kind" => "commit"},
+      document.dig("opencode_ruby", "source_provenance"))
+    assert_equal({"commit" => RAILS_COMMIT, "kind" => "commit"},
+      document.dig("opencode_rails", "source_provenance"))
+  end
+
+  def test_publication_state_cannot_weaken_published_tag_binding
+    @env["OPENCODE_RUBY_PROVENANCE_KIND"] = "commit"
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+    assert_match(/published candidate/, error.message)
+
+    use_commit_only_provenance!
+    @env["OPENCODE_RAILS_PROVENANCE_KIND"] = "annotated-tag"
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+    assert_match(/unpublished candidate/, error.message)
+  end
+
+  def test_commit_only_provenance_rejects_residual_tag_coordinates
+    use_commit_only_provenance!
+    @env["OPENCODE_RUBY_TAG"] = RUBY_TAG
+
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+
+    assert_match(/must not supply OPENCODE_RUBY_TAG/, error.message)
+  end
+
+  def test_commit_only_provenance_stops_when_the_release_tag_appears
+    use_commit_only_provenance!
+    set_git_result(
+      @ruby_path,
+      ["rev-parse", "--verify", "--quiet", "refs/tags/#{RUBY_TAG}"],
+      RUBY_TAG_OBJECT
+    )
+
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+
+    assert_match(/release tag #{Regexp.escape(RUBY_TAG)} already exists/, error.message)
+    assert_match(/publication_state must be published/, error.message)
+  end
+
+  def test_commit_only_provenance_does_not_treat_git_errors_as_an_absent_tag
+    use_commit_only_provenance!
+    @git_results[[@ruby_path, ["rev-parse", "--verify", "--quiet", "refs/tags/#{RUBY_TAG}"]]] =
+      OpenCodeCompat::LockstepClientContract::GitCommandError.new("corrupt ref", exitstatus: 128)
+
+    resolver = lambda do |path, *arguments|
+      result = resolve_git(path, *arguments)
+      raise result if result.is_a?(Exception)
+
+      result
+    end
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) do
+      contract(git_resolver: resolver).verify
+    end
+
+    assert_match(/could not check opencode-ruby release tag: corrupt ref/, error.message)
   end
 
   def test_rejects_checkout_commit_mismatch_for_either_client
@@ -223,6 +298,17 @@ class LockstepClientContractTest < Minitest::Test
     @bundle_ruby_spec.source = LockstepClientContractTestSources::Git.new("f" * 40)
     error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
     assert_match(/Bundler opencode-ruby revision/, error.message)
+
+    @bundle_ruby_spec.source = LockstepClientContractTestSources::Git.new(RUBY_COMMIT, ref: "main")
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+    assert_match(/Bundler opencode-ruby ref/, error.message)
+
+    @bundle_ruby_spec.source = LockstepClientContractTestSources::Git.new(
+      RUBY_COMMIT,
+      uri: "https://example.test/opencode-ruby.git"
+    )
+    error = assert_raises(OpenCodeCompat::LockstepClientContract::ContractError) { contract.verify }
+    assert_match(/Bundler opencode-ruby URI/, error.message)
   end
 
   def test_rejects_loaded_rails_gem_from_another_checkout
@@ -278,6 +364,7 @@ class LockstepClientContractTest < Minitest::Test
     assert_equal 1, status.exitstatus
     failure = JSON.parse(File.binread(evidence_path))
     assert_equal "opencode-client-lockstep", failure.fetch("contract")
+    assert_equal 2, failure.fetch("schema_version")
     assert_equal "fail", failure.fetch("status")
     assert_match(/missing required environment/, failure.fetch("error"))
     assert_equal failure, JSON.parse(stderr)
@@ -285,10 +372,10 @@ class LockstepClientContractTest < Minitest::Test
 
   private
 
-  def contract(ruby_version: VERSION, rails_version: VERSION)
+  def contract(ruby_version: VERSION, rails_version: VERSION, git_resolver: method(:resolve_git))
     OpenCodeCompat::LockstepClientContract.new(
       env: @env,
-      git_resolver: method(:resolve_git),
+      git_resolver: git_resolver,
       loaded_specs: {
         "opencode-ruby" => @ruby_spec,
         "opencode-rails" => @rails_spec
@@ -314,5 +401,15 @@ class LockstepClientContractTest < Minitest::Test
 
   def set_git_result(path, arguments, result)
     @git_results[[path, arguments]] = result
+  end
+
+  def use_commit_only_provenance!
+    @env["OPENCODE_CLIENT_PUBLICATION_STATE"] = "unpublished"
+    @env["OPENCODE_RUBY_PROVENANCE_KIND"] = "commit"
+    @env["OPENCODE_RAILS_PROVENANCE_KIND"] = "commit"
+    @env.delete("OPENCODE_RUBY_TAG")
+    @env.delete("OPENCODE_RUBY_TAG_OBJECT")
+    @env.delete("OPENCODE_RAILS_TAG")
+    @env.delete("OPENCODE_RAILS_TAG_OBJECT")
   end
 end

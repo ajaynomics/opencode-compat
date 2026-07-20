@@ -1,5 +1,12 @@
 {
-  "schema_version": 1,
+  "schema_version": 2,
+  "client_candidate": {
+    "release_train": "0.0.1.alpha8",
+    "publication_state": "unpublished",
+    "opencode_ruby_commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+    "opencode_rails_commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+    "certification_status": "pending"
+  },
   "public_ci": [
     {
       "id": "upstream-1.16.1",
@@ -9,12 +16,15 @@
       "consumers": ["travelwolf"],
       "profiles": ["ruby-rest-sse"],
       "required_consumer_profiles": ["rails-persisted-turn"],
-      "certification_status": "certified",
-      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-      "certified_at": "2026-07-18T22:03:12Z",
-      "expected_text": "compat-ok",
-      "full_text": "compat-ok",
-      "llm_request_count": 1
+      "certification_status": "pending",
+      "previous_certification": {
+        "status": "certified",
+        "client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+        "certified_at": "2026-07-18T22:03:12Z",
+        "expected_text": "compat-ok",
+        "full_text": "compat-ok",
+        "llm_request_count": 1
+      }
     },
     {
       "id": "upstream-1.17.18",
@@ -24,12 +34,15 @@
       "consumers": ["opencode-ajent"],
       "profiles": ["ruby-rest-sse"],
       "required_consumer_profiles": ["plugin-ledger"],
-      "certification_status": "certified",
-      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-      "certified_at": "2026-07-18T22:03:13Z",
-      "expected_text": "compat-ok",
-      "full_text": "compat-ok",
-      "llm_request_count": 1
+      "certification_status": "pending",
+      "previous_certification": {
+        "status": "certified",
+        "client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+        "certified_at": "2026-07-18T22:03:13Z",
+        "expected_text": "compat-ok",
+        "full_text": "compat-ok",
+        "llm_request_count": 1
+      }
     },
     {
       "id": "upstream-1.18.3",
@@ -39,12 +52,15 @@
       "consumers": ["ajent-rails"],
       "profiles": ["ruby-rest-sse"],
       "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"],
-      "certification_status": "certified",
-      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-      "certified_at": "2026-07-18T22:03:14Z",
-      "expected_text": "compat-ok",
-      "full_text": "compat-ok",
-      "llm_request_count": 1
+      "certification_status": "pending",
+      "previous_certification": {
+        "status": "certified",
+        "client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+        "certified_at": "2026-07-18T22:03:14Z",
+        "expected_text": "compat-ok",
+        "full_text": "compat-ok",
+        "llm_request_count": 1
+      }
     }
   ],
   "host_canary": [
@@ -58,12 +74,15 @@
       "reported_version": "1.18.3",
       "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
       "profiles": ["rails-persisted-turn"],
-      "certification_status": "candidate-certified",
-      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-      "certified_rails_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
-      "certified_at": "2026-07-18T21:58:00Z",
-      "persisted_final_text": "compat-ok",
-      "model_request_count": 1
+      "certification_status": "pending",
+      "previous_certification": {
+        "status": "candidate-certified",
+        "client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+        "rails_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+        "certified_at": "2026-07-18T21:58:00Z",
+        "persisted_final_text": "compat-ok",
+        "model_request_count": 1
+      }
     },
     {
       "id": "mushu-permission-shortcuts-alpha7-canary",
@@ -75,11 +94,14 @@
       "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
       "reported_version": "0.0.0-permission-shortcuts-202606300721",
       "profiles": ["ruby-rest-sse"],
-      "certification_status": "candidate-certified",
-      "certified_client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-      "certified_at": "2026-07-18T21:53:00Z",
-      "persisted_final_text": "compat-ok",
-      "model_request_count": 1
+      "certification_status": "pending",
+      "previous_certification": {
+        "status": "candidate-certified",
+        "client_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+        "certified_at": "2026-07-18T21:53:00Z",
+        "persisted_final_text": "compat-ok",
+        "model_request_count": 1
+      }
     }
   ]
 }

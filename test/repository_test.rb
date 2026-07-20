@@ -2,6 +2,7 @@
 
 require "json"
 require "minitest/autorun"
+require_relative "../lib/opencode_compat/client_candidate"
 require_relative "../lib/opencode_compat/runtime_tuple_promoter"
 
 class RepositoryTest < Minitest::Test
@@ -37,7 +38,9 @@ class RepositoryTest < Minitest::Test
   end
 
   def test_public_matrix_uses_only_immutable_oci_digests
-    targets = json("manifests/image-matrix.json").fetch("public_ci")
+    manifest = json("manifests/image-matrix.json")
+    assert_equal 2, manifest.fetch("schema_version")
+    targets = manifest.fetch("public_ci")
     refute_empty targets
     targets.each do |target|
       assert_match %r{\Aghcr\.io/anomalyco/opencode@sha256:[0-9a-f]{64}\z}, target.fetch("image")
@@ -45,36 +48,85 @@ class RepositoryTest < Minitest::Test
       assert_equal ["ruby-rest-sse"], target.fetch("profiles")
       assert_equal "shared-client-contract-only",
         target.fetch("certification_scope", "shared-client-contract-only")
-      next unless target.fetch("certification_status") == "certified"
+      assert_equal "pending", target.fetch("certification_status")
+      previous = target["previous_certification"]
+      next unless previous
 
-      assert_match(/\A[0-9a-f]{40}\z/, target.fetch("certified_client_commit"))
-      assert_equal target.fetch("expected_text"), target.fetch("full_text")
-      assert_equal 1, target.fetch("llm_request_count")
+      assert_equal "certified", previous.fetch("status")
+      assert_match(/\A[0-9a-f]{40}\z/, previous.fetch("client_commit"))
+      assert_equal previous.fetch("expected_text"), previous.fetch("full_text")
+      assert_equal 1, previous.fetch("llm_request_count")
     end
   end
 
-  def test_candidate_client_train_is_lockstep_and_bound_to_annotated_tags
+  def test_candidate_client_train_is_lockstep_and_bound_to_unpublished_commits
     candidate = json("manifests/client-candidate.json")
+    OpenCodeCompat::ClientCandidate.new(candidate).verify!
     clients = candidate.fetch("clients")
     release_train = candidate.fetch("release_train")
 
-    assert_equal 2, candidate.fetch("schema_version")
+    assert_equal 3, candidate.fetch("schema_version")
     assert_equal "candidate", candidate.fetch("status")
+    assert_equal "unpublished", candidate.fetch("publication_state")
+    assert_equal "0.0.1.alpha8", release_train
     assert_equal %w[opencode-rails opencode-ruby], clients.keys.sort
 
     clients.each do |name, client|
-      provenance = client.fetch("tag_provenance")
+      provenance = client.fetch("provenance")
       assert_equal "ajaynomics/#{name}", client.fetch("repository")
       assert_equal release_train, client.fetch("version")
       assert_match(/\A[0-9a-f]{40}\z/, client.fetch("ref"))
-      assert_equal "v#{release_train}", provenance.fetch("tag")
-      assert_match(/\A[0-9a-f]{40}\z/, provenance.fetch("annotated_tag_object"))
-      assert_equal client.fetch("ref"), provenance.fetch("peeled_commit")
+      assert_equal "commit", provenance.fetch("kind")
+      assert_equal client.fetch("ref"), provenance.fetch("commit")
+      refute provenance.key?("tag")
     end
 
+    assert_equal "9277646a4bb2cf25a8384ffc140b154f49ea5766", clients.dig("opencode-ruby", "ref")
+    assert_equal "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f", clients.dig("opencode-rails", "ref")
     dependency = clients.fetch("opencode-rails").fetch("runtime_dependencies").fetch("opencode-ruby")
     assert_equal "= #{release_train}", dependency.fetch("requirement")
     assert_equal clients.fetch("opencode-ruby").fetch("ref"), dependency.fetch("ref")
+  end
+
+  def test_image_matrix_is_pending_and_bound_to_the_exact_client_candidate
+    candidate = json("manifests/client-candidate.json")
+    clients = candidate.fetch("clients")
+    matrix_candidate = json("manifests/image-matrix.json").fetch("client_candidate")
+
+    assert_equal "pending", matrix_candidate.fetch("certification_status")
+    assert_equal candidate.fetch("release_train"), matrix_candidate.fetch("release_train")
+    assert_equal candidate.fetch("publication_state"), matrix_candidate.fetch("publication_state")
+    assert_equal clients.dig("opencode-ruby", "ref"), matrix_candidate.fetch("opencode_ruby_commit")
+    assert_equal clients.dig("opencode-rails", "ref"), matrix_candidate.fetch("opencode_rails_commit")
+
+    json("manifests/image-matrix.json").fetch("host_canary").each do |target|
+      assert_equal "pending", target.fetch("certification_status")
+      previous = target.fetch("previous_certification")
+      assert_includes %w[candidate-certified certified], previous.fetch("status")
+      assert_match(/\A[0-9a-f]{40}\z/, previous.fetch("client_commit"))
+    end
+  end
+
+  def test_alpha8_local_image_evidence_is_review_input_not_app_certification
+    evidence = json("evidence/2026-07-20-opencode-alpha8-pre-release-shared-client.json")
+    candidate = json("manifests/client-candidate.json").fetch("clients")
+
+    assert_equal "not-certified", evidence.fetch("certification_status")
+    assert_equal "shared-client-contract-only", evidence.fetch("coverage_scope")
+    assert_equal "unpublished", evidence.fetch("publication_state")
+    assert_equal candidate.dig("opencode-ruby", "ref"), evidence.dig("clients", "opencode_ruby", "commit")
+    assert_equal candidate.dig("opencode-rails", "ref"), evidence.dig("clients", "opencode_rails", "commit")
+    assert_equal true, evidence.dig("clients", "opencode_ruby", "executed")
+    assert_equal false, evidence.dig("clients", "opencode_rails", "executed_by_image_contract")
+    assert_equal 5, evidence.fetch("checks").length
+    evidence.fetch("checks").each do |check|
+      assert_equal "pass", check.fetch("status")
+      assert_equal ["ruby-rest-sse"], check.fetch("executed_profiles")
+      assert_equal check.fetch("expected_text"), check.fetch("full_text")
+      assert_equal 1, check.fetch("authoritative_assistant_message_count")
+      assert_equal 1, check.fetch("llm_request_count")
+    end
+    assert evidence.fetch("limitations").any? { |entry| entry.include?("remain unverified") }
   end
 
   def test_certified_migration_keeps_previous_tuple
@@ -204,7 +256,11 @@ class RepositoryTest < Minitest::Test
     assert_includes workflow, "repository: ajaynomics/opencode-ruby"
     assert_includes workflow, "repository: ajaynomics/opencode-rails"
     assert_includes workflow, "path: opencode-rails"
-    assert_includes workflow, "ruby: [\"3.2\", \"3.3\", \"3.4\"]"
+    assert_includes workflow, "ruby: [\"3.2\", \"3.3\", \"3.4\", \"4.0\"]"
+    assert_includes workflow, "scripts/client_candidate_outputs.rb"
+    assert_includes workflow, "OPENCODE_CLIENT_PUBLICATION_STATE"
+    assert_includes workflow, "OPENCODE_RUBY_PROVENANCE_KIND"
+    assert_includes workflow, "OPENCODE_RAILS_PROVENANCE_KIND"
     assert_includes workflow, "ruby/lockstep_client_contract.rb"
     assert_includes workflow, "OPENCODE_RUBY_TAG_OBJECT"
     assert_includes workflow, "OPENCODE_RAILS_TAG_OBJECT"
