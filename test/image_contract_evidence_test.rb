@@ -4,11 +4,13 @@ require "fileutils"
 require "json"
 require "minitest/autorun"
 require "open3"
+require "rbconfig"
 require "tmpdir"
 
 class ImageContractEvidenceTest < Minitest::Test
   ROOT = File.expand_path("..", __dir__)
   RUNNER = File.join(ROOT, "scripts/run_image_contract.sh")
+  GATEWAY_RESOLVER = File.join(ROOT, "scripts/private_default_gateway.rb")
   VALID_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'a' * 64}"
 
   def setup
@@ -123,6 +125,32 @@ class ImageContractEvidenceTest < Minitest::Test
       assert_match(/loopback or private IPv4 address/, error)
       assert_failed_without_docker(evidence_path)
     end
+  end
+
+  def test_resolves_a_private_default_gateway_from_linux_route_hex
+    route_path = File.join(@tmp, "route")
+    File.write(route_path, <<~ROUTES)
+      Iface Destination Gateway Flags RefCnt Use Metric Mask MTU Window IRTT
+      eth0 00000000 010011AC 0003 0 0 10 00000000 0 0 0
+    ROUTES
+
+    output, error, status = Open3.capture3(RbConfig.ruby, GATEWAY_RESOLVER, route_path)
+
+    assert status.success?, error
+    assert_equal "172.17.0.1\n", output
+  end
+
+  def test_gateway_resolver_rejects_a_public_default_gateway
+    route_path = File.join(@tmp, "public-route")
+    File.write(route_path, <<~ROUTES)
+      Iface Destination Gateway Flags RefCnt Use Metric Mask MTU Window IRTT
+      eth0 00000000 08080808 0003 0 0 10 00000000 0 0 0
+    ROUTES
+
+    _output, error, status = Open3.capture3(RbConfig.ruby, GATEWAY_RESOLVER, route_path)
+
+    refute status.success?
+    assert_match(/no private IPv4 default-route gateway found/, error)
   end
 
   private

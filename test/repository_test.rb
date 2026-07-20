@@ -287,8 +287,7 @@ class RepositoryTest < Minitest::Test
     assert_includes workflow, "exact-image-contract-gitea:"
     assert_includes workflow, "if: github.server_url != 'https://github.com'"
     assert_includes workflow, "run: scripts/run_image_matrix_contract.sh"
-    assert_includes workflow, "ip -4 route show default"
-    assert_includes workflow, "address.ipv4? && address.private?"
+    assert_includes workflow, 'probe_host="$(ruby scripts/private_default_gateway.rb)"'
     assert_includes workflow, 'echo "OPENCODE_PROBE_HOST=$probe_host" >> "$GITHUB_ENV"'
     assert_operator workflow.scan('BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile').length, :>=, 2
     assert_operator workflow.scan("generated JSON is transient and is not review evidence").length, :>=, 3

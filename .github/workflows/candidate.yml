@@ -300,10 +300,7 @@ jobs:
           echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
       - name: Resolve the private Docker host transport
         run: |
-          probe_host="$(ip -4 route show default | awk '/^default / {print $3; exit}')"
-          ruby -ripaddr -e \
-            'address = IPAddr.new(ARGV.fetch(0)); exit(address.ipv4? && address.private? ? 0 : 1)' \
-            "$probe_host"
+          probe_host="$(ruby scripts/private_default_gateway.rb)"
           echo "OPENCODE_PROBE_HOST=$probe_host" >> "$GITHUB_ENV"
       - name: Exercise the complete manifest matrix without artifact claims
         env:
