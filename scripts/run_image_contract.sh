@@ -121,11 +121,14 @@ docker run --detach \
   --name "$llm_container_name" \
   --network "$network_name" \
   --network-alias compat-llm \
-  --volume "$repo_root/scripts:/compat:ro" \
   "$python_image" \
-  python /compat/fake_llm.py --port 8080 --port-file /tmp/compat-port \
+  python -c 'import time; time.sleep(3600)' \
   >/dev/null
 llm_container_started=1
+docker cp "$repo_root/scripts/fake_llm.py" "$llm_container_name:/tmp/fake_llm.py"
+docker exec --detach \
+  "$llm_container_name" \
+  python /tmp/fake_llm.py --port 8080 --port-file /tmp/compat-port
 
 for _ in $(seq 1 100); do
   if docker exec "$llm_container_name" wget -qO- http://127.0.0.1:8080/health >/dev/null 2>&1; then

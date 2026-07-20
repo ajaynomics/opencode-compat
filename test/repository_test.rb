@@ -325,6 +325,8 @@ class RepositoryTest < Minitest::Test
     assert_includes probe, "ExactLiveContract.assert_authoritative_assistant_count!"
     refute_includes probe, "full_text.include?"
     assert_includes runner, "exact_live_contract.rb"
+    assert_includes runner, 'docker cp "$repo_root/scripts/fake_llm.py"'
+    refute_includes runner, '--volume "$repo_root/scripts:/compat:ro"'
     assert_includes runner, "OPENCODE_COMPAT_EVIDENCE_PATH"
     assert_includes runner, "OPENCODE_EXPECTED_VERSION"
     refute_match(/request_count.*-lt\s+1/, runner)
