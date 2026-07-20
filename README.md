@@ -122,7 +122,9 @@ durable certification documents and Git history are the archive. This keeps a
 fast-moving upstream from making every future run retest every old release.
 
 See [docs/certification.md](docs/certification.md) for promotion, canary, and
-rollback evidence requirements.
+rollback evidence requirements, and [docs/maintenance.md](docs/maintenance.md)
+for consumer ownership, release order, runner boundaries, and expected failure
+modes.
 
 ## License
 

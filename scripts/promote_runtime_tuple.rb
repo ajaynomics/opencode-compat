@@ -20,6 +20,10 @@ parser = OptionParser.new do |opts|
         --status pass --certified-at TIMESTAMP --evidence evidence/FILE.json \\
         [--previous-status pass --previous-certified-at TIMESTAMP \\
          --previous-evidence evidence/FILE.json] [--dry-run]
+      ruby scripts/promote_runtime_tuple.rb bootstrap-current --consumer NAME --consumer-commit SHA \\
+        --status pass --certified-at TIMESTAMP --evidence evidence/FILE.json \\
+        --acknowledge-degraded-rollback \\
+          accept-degraded-rollback-with-failed-emergency-provenance [--dry-run]
   USAGE
 
   opts.on("--consumer NAME") { |value| options["consumer"] = value }
@@ -30,6 +34,9 @@ parser = OptionParser.new do |opts|
   opts.on("--previous-status STATUS") { |value| options["previous_status"] = value }
   opts.on("--previous-certified-at TIMESTAMP") { |value| options["previous_certified_at"] = value }
   opts.on("--previous-evidence PATH") { |value| options["previous_evidence"] << value }
+  opts.on("--acknowledge-degraded-rollback VALUE") do |value|
+    options["degraded_rollback_acknowledgement"] = value
+  end
   opts.on("--dry-run") { options["dry_run"] = true }
 end
 
@@ -94,8 +101,42 @@ begin
         "migration_state" => promoted.fetch("migration_state")
       )
     end
+  when "bootstrap-current"
+    required!(
+      options,
+      "consumer",
+      "consumer_commit",
+      "status",
+      "certified_at",
+      "evidence",
+      "degraded_rollback_acknowledgement"
+    )
+    bootstrapped = promoter.bootstrap_current(
+      consumer: options.fetch("consumer"),
+      consumer_commit: options.fetch("consumer_commit"),
+      certification: {
+        "status" => options.fetch("status"),
+        "certified_at" => options.fetch("certified_at"),
+        "evidence" => options.fetch("evidence")
+      },
+      acknowledgement: options.fetch("degraded_rollback_acknowledgement"),
+      dry_run: options.fetch("dry_run", false)
+    )
+    if options.fetch("dry_run", false)
+      puts JSON.pretty_generate(bootstrapped)
+    else
+      consumer = bootstrapped.fetch("consumers").fetch(options.fetch("consumer"))
+      puts JSON.pretty_generate(
+        "consumer" => options.fetch("consumer"),
+        "current_consumer_commit" => consumer.dig("current", "consumer_commit"),
+        "current_tuple_sha256" => consumer.dig("current", "certification", "tuple_sha256"),
+        "previous" => consumer.fetch("previous"),
+        "rollback_state" => consumer.fetch("rollback_state"),
+        "migration_state" => bootstrapped.fetch("migration_state")
+      )
+    end
   else
-    raise OptionParser::InvalidArgument, "command must be fingerprint or promote"
+    raise OptionParser::InvalidArgument, "command must be fingerprint, promote, or bootstrap-current"
   end
 rescue OpenCodeCompat::PromotionError, OptionParser::ParseError => e
   warn "error: #{e.message}"

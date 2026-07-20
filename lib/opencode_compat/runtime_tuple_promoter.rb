@@ -15,6 +15,8 @@ module OpenCodeCompat
     IMMUTABLE_IMAGE = /\A[^@\s]+@sha256:[0-9a-f]{64}\z/
     UTC_TIMESTAMP = /\A\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}(?:\.\d+)?Z\z/
     CERTIFICATION_STATUS = "pass"
+    DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT =
+      "accept-degraded-rollback-with-failed-emergency-provenance"
     NON_CERTIFIABLE_TUPLE_STATUSES = %w[observed-production-contract-failed].freeze
     TUPLE_METADATA_KEYS = %w[
       certification
@@ -82,6 +84,37 @@ module OpenCodeCompat
       end
     end
 
+    def bootstrap_current(consumer:, consumer_commit:, certification:, acknowledgement:, dry_run: false)
+      validate_full_commit!(consumer_commit, "consumer commit")
+      unless acknowledgement == DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT
+        raise PromotionError,
+              "bootstrap requires explicit acknowledgement #{DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT.inspect}"
+      end
+
+      if dry_run
+        manifest = read_manifest
+        return bootstrap_current_manifest(
+          manifest,
+          consumer: consumer,
+          consumer_commit: consumer_commit,
+          certification: certification,
+          acknowledgement: acknowledgement
+        )
+      end
+
+      with_current_manifest_lock do |manifest|
+        bootstrapped = bootstrap_current_manifest(
+          manifest,
+          consumer: consumer,
+          consumer_commit: consumer_commit,
+          certification: certification,
+          acknowledgement: acknowledgement
+        )
+        atomic_write(bootstrapped)
+        bootstrapped
+      end
+    end
+
     private
 
     def read_manifest
@@ -124,7 +157,55 @@ module OpenCodeCompat
       consumer_entry["previous"] = certified_previous
       consumer_entry["current"] = certified_candidate
       consumer_entry["candidate"] = nil
-      manifest["migration_state"] = all_consumers_certified?(manifest) ? "certified" : "candidate"
+      consumer_entry.delete("rollback_state")
+      refresh_promotion_state!(manifest)
+      manifest
+    end
+
+    def bootstrap_current_manifest(manifest, consumer:, consumer_commit:, certification:, acknowledgement:)
+      consumer_entry = fetch_consumer!(manifest, consumer)
+      profile = fetch_profile!(consumer_entry, consumer)
+      candidate = prepare_candidate!(consumer_entry, consumer_commit)
+      current = consumer_entry.fetch("current") do
+        raise PromotionError, "#{consumer} has no current tuple to retain as emergency provenance"
+      end
+      validate_tuple!(current, "#{consumer} current")
+      unless NON_CERTIFIABLE_TUPLE_STATUSES.include?(current["status"])
+        raise PromotionError, "degraded bootstrap is only for a current tuple known to fail the contract"
+      end
+      unless consumer_entry["previous"].nil?
+        raise PromotionError, "degraded bootstrap cannot replace an existing previous tuple"
+      end
+      if consumer_entry.key?("emergency_provenance") || consumer_entry.key?("rollback_state")
+        raise PromotionError, "degraded bootstrap has already been recorded for this consumer"
+      end
+
+      candidate_fingerprint = tuple_fingerprint(candidate, consumer: consumer, profile: profile)
+      current_fingerprint = tuple_fingerprint(current, consumer: consumer, profile: profile)
+      if candidate_fingerprint == current_fingerprint
+        raise PromotionError, "#{consumer} candidate is identical to its failed current tuple"
+      end
+
+      certified_candidate = certify_tuple!(
+        candidate,
+        consumer: consumer,
+        profile: profile,
+        supplied: certification,
+        expected_fingerprint: candidate_fingerprint,
+        label: "bootstrap candidate"
+      )
+
+      consumer_entry["emergency_provenance"] = deep_copy(current)
+      consumer_entry["current"] = certified_candidate
+      consumer_entry["candidate"] = nil
+      consumer_entry["previous"] = nil
+      consumer_entry["rollback_state"] = {
+        "status" => "degraded-no-certified-previous",
+        "acknowledgement" => acknowledgement,
+        "recorded_at" => certification.fetch("certified_at"),
+        "emergency_provenance_status" => current.fetch("status")
+      }
+      refresh_promotion_state!(manifest)
       manifest
     end
 
@@ -453,6 +534,61 @@ module OpenCodeCompat
           false
         end
       end
+    end
+
+    def all_consumers_bootstrapped?(manifest)
+      manifest.fetch("consumers").all? do |consumer, entry|
+        next false unless entry["candidate"].nil? && entry["previous"].nil?
+        next false unless entry.dig("rollback_state", "status") == "degraded-no-certified-previous"
+        next false unless NON_CERTIFIABLE_TUPLE_STATUSES.include?(entry.dig("emergency_provenance", "status"))
+
+        profile = fetch_profile!(entry, consumer)
+        tuple = entry["current"]
+        next false unless tuple.is_a?(Hash) && tuple["status"] == "certified"
+
+        validate_tuple!(tuple, "#{consumer} current")
+        validate_recorded_certification!(
+          tuple,
+          consumer: consumer,
+          profile: profile,
+          expected_fingerprint: tuple_fingerprint(tuple, consumer: consumer, profile: profile),
+          label: "#{consumer} current"
+        )
+        true
+      rescue PromotionError
+        false
+      end
+    end
+
+    def migration_state_for(manifest)
+      return "certified" if all_consumers_certified?(manifest)
+      return "bootstrap-current-only" if all_consumers_bootstrapped?(manifest)
+
+      "candidate"
+    end
+
+    def refresh_promotion_state!(manifest)
+      manifest["migration_state"] = migration_state_for(manifest)
+      manifest["promotion_readiness"] = case manifest.fetch("migration_state")
+                                        when "certified"
+                                          {
+                                            "status" => "certified",
+                                            "reason" => "Every consumer has exact current and previous passing tuples.",
+                                            "required_action" => "Promote only a newly certified, materially changed tuple."
+                                          }
+                                        when "bootstrap-current-only"
+                                          {
+                                            "status" => "bootstrap-current-only",
+                                            "reason" => "Every current tuple is certified, but no independently passing previous tuple exists yet.",
+                                            "required_action" => "Certify the next meaningful release so normal promotion retains the current tuple as previous."
+                                          }
+                                        else
+                                          {
+                                            "status" => "candidate",
+                                            "reason" => "At least one consumer transition remains incomplete.",
+                                            "required_action" => "Finish exact tuple certification without treating failed emergency provenance as rollback evidence."
+                                          }
+                                        end
     end
 
     def with_current_manifest_lock

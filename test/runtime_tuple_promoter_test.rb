@@ -10,14 +10,19 @@ class RuntimeTuplePromoterTest < Minitest::Test
   CONSUMER = "example"
   CURRENT_COMMIT = "1" * 40
   CANDIDATE_COMMIT = "2" * 40
+  NEXT_COMMIT = "7" * 40
   RUBY_CURRENT = "3" * 40
   RUBY_CANDIDATE = "4" * 40
+  RUBY_NEXT = "8" * 40
   RAILS_CURRENT = "5" * 40
   RAILS_CANDIDATE = "6" * 40
+  RAILS_NEXT = "9" * 40
   CURRENT_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'a' * 64}"
   CANDIDATE_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'b' * 64}"
+  NEXT_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'c' * 64}"
   CURRENT_TIME = "2026-07-17T12:00:00Z"
   CANDIDATE_TIME = "2026-07-18T12:00:00Z"
+  NEXT_TIME = "2026-07-19T12:00:00Z"
 
   def setup
     @root = Dir.mktmpdir("opencode-compat-promotion")
@@ -173,6 +178,163 @@ class RuntimeTuplePromoterTest < Minitest::Test
 
     assert_match(/known to fail/, error.message)
     assert_equal before, File.binread(manifest_path)
+  end
+
+  def test_explicit_degraded_bootstrap_preserves_failed_emergency_provenance
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "current")["status"] = "observed-production-contract-failed"
+    write_manifest(manifest)
+    candidate_fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    evidence = write_evidence(
+      "bootstrap-candidate.json",
+      commit: CANDIDATE_COMMIT,
+      timestamp: CANDIDATE_TIME,
+      fingerprint: candidate_fingerprint
+    )
+    before = File.binread(manifest_path)
+
+    preview = @promoter.bootstrap_current(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, evidence),
+      acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT,
+      dry_run: true
+    )
+
+    assert_equal before, File.binread(manifest_path)
+    assert_equal "bootstrap-current-only", preview.fetch("migration_state")
+
+    bootstrapped = @promoter.bootstrap_current(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, evidence),
+      acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT
+    )
+    consumer = bootstrapped.dig("consumers", CONSUMER)
+
+    assert_equal "certified", consumer.dig("current", "status")
+    assert_equal CANDIDATE_COMMIT, consumer.dig("current", "consumer_commit")
+    assert_nil consumer["candidate"]
+    assert_nil consumer["previous"]
+    assert_equal "observed-production-contract-failed", consumer.dig("emergency_provenance", "status")
+    assert_nil consumer.dig("emergency_provenance", "certification")
+    assert_equal "degraded-no-certified-previous", consumer.dig("rollback_state", "status")
+    assert_equal "bootstrap-current-only", bootstrapped.dig("promotion_readiness", "status")
+    assert_equal bootstrapped, JSON.parse(File.read(manifest_path))
+  end
+
+  def test_bootstrap_then_normal_promotion_retains_the_first_passing_tuple_as_previous
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "current")["status"] = "observed-production-contract-failed"
+    write_manifest(manifest)
+    bootstrap_fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    bootstrap_evidence = write_evidence(
+      "bootstrap-rollback.json",
+      commit: CANDIDATE_COMMIT,
+      timestamp: CANDIDATE_TIME,
+      fingerprint: bootstrap_fingerprint
+    )
+    @promoter.bootstrap_current(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, bootstrap_evidence),
+      acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT
+    )
+
+    manifest = JSON.parse(File.read(manifest_path))
+    manifest.dig("consumers", CONSUMER)["candidate"] = {
+      "status" => "compatibility-certified",
+      "certified_at" => NEXT_TIME,
+      "consumer_commit" => NEXT_COMMIT,
+      "opencode_ruby" => {"version" => "0.0.1.alpha8", "git_commit" => RUBY_NEXT},
+      "opencode_rails" => {"version" => "0.0.1.alpha8", "git_commit" => RAILS_NEXT},
+      "runtime" => {"image" => NEXT_IMAGE, "reported_version" => "1.19.0"}
+    }
+    write_manifest(manifest)
+    next_fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: NEXT_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    next_evidence = write_evidence(
+      "next-current.json",
+      commit: NEXT_COMMIT,
+      timestamp: NEXT_TIME,
+      fingerprint: next_fingerprint
+    )
+
+    promoted = @promoter.promote(
+      consumer: CONSUMER,
+      consumer_commit: NEXT_COMMIT,
+      certification: certification(NEXT_TIME, next_evidence)
+    )
+    consumer = promoted.dig("consumers", CONSUMER)
+
+    assert_equal NEXT_COMMIT, consumer.dig("current", "consumer_commit")
+    assert_equal CANDIDATE_COMMIT, consumer.dig("previous", "consumer_commit")
+    assert_equal "certified", consumer.dig("previous", "status")
+    assert_equal "observed-production-contract-failed", consumer.dig("emergency_provenance", "status")
+    refute consumer.key?("rollback_state")
+    assert_equal "certified", promoted.fetch("migration_state")
+    assert_equal "certified", promoted.dig("promotion_readiness", "status")
+  end
+
+  def test_degraded_bootstrap_requires_exact_acknowledgement
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.bootstrap_current(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: {},
+        acknowledgement: "yes",
+        dry_run: true
+      )
+    end
+
+    assert_match(/explicit acknowledgement/, error.message)
+  end
+
+  def test_degraded_bootstrap_rejects_a_passing_baseline_or_existing_previous_tuple
+    candidate, = write_matching_evidence
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.bootstrap_current(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: certification(CANDIDATE_TIME, candidate),
+        acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT,
+        dry_run: true
+      )
+    end
+    assert_match(/only for a current tuple known to fail/, error.message)
+
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "current")["status"] = "observed-production-contract-failed"
+    manifest.dig("consumers", CONSUMER)["previous"] = manifest.dig("consumers", CONSUMER, "current").dup
+    write_manifest(manifest)
+    candidate_fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    evidence = write_evidence(
+      "bootstrap-existing-previous.json",
+      commit: CANDIDATE_COMMIT,
+      timestamp: CANDIDATE_TIME,
+      fingerprint: candidate_fingerprint
+    )
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.bootstrap_current(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: certification(CANDIDATE_TIME, evidence),
+        acknowledgement: OpenCodeCompat::RuntimeTuplePromoter::DEGRADED_BOOTSTRAP_ACKNOWLEDGEMENT,
+        dry_run: true
+      )
+    end
+    assert_match(/cannot replace an existing previous/, error.message)
   end
 
   def test_rejects_evidence_that_does_not_match_the_complete_tuple
