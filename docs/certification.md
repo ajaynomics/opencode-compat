@@ -85,6 +85,13 @@ must explicitly contain values matching the promotion:
 }
 ```
 
+The promotion command stores each accepted document as a hash-bound reference,
+`{"path":"evidence/...json","sha256":"sha256:..."}`. Later transitions
+re-read the bytes, verify that digest, and cross-check any detailed consumer
+tree, client, and runtime coordinates against the tuple. Editing an evidence
+document therefore invalidates the certification until it is reviewed and
+promoted again; a copied `tuple_sha256` alone is not sufficient.
+
 Preview the exact manifest transition with `--dry-run`, then repeat without it
 to write the manifest:
 
@@ -153,16 +160,34 @@ create and canary a distinct consumer rollback commit that preserves the same
 known-good client and exact runtime. Only after both immutable consumer commits
 have real passing evidence can the manifest honestly contain certified
 `current` and `previous` tuples. Until then, `promotion_readiness` remains
-blocked and the candidate PR must not be treated as a deploy authorization.
+non-certified (`bootstrap-current-only` or `candidate`) and the candidate PR
+must not be treated as deploy authorization.
 
-The schema-v1 promotion command deliberately cannot perform the first degraded
-bootstrap transition when `current` is a known-failing baseline. Do not bypass
-that guard by hand-editing the manifest or relabeling alpha2 evidence. A
-separate reviewed state-machine change must first add an explicit
-`bootstrap-current-only` state that preserves the failed baseline as
-uncertified emergency provenance and leaves `previous` null. Itemized rollback
-certification is complete only after a later, materially distinct passing tuple
-can move the first certified current into `previous`.
+Use the explicit degraded-bootstrap transition for the first passing rollback
+tuple. It requires passing evidence bound to the complete candidate fingerprint
+and a literal acknowledgement; it preserves the failed baseline as uncertified
+`emergency_provenance`, leaves `previous` null, and records the temporary
+`bootstrap-current-only` state:
+
+```sh
+ruby scripts/promote_runtime_tuple.rb bootstrap-current \
+  --consumer travelwolf \
+  --consumer-commit FULL_40_CHARACTER_ROLLBACK_COMMIT \
+  --status pass \
+  --certified-at 2026-07-20T12:00:00Z \
+  --evidence evidence/travelwolf-rollback.json \
+  --acknowledge-degraded-rollback \
+    accept-degraded-rollback-with-failed-emergency-provenance \
+  --dry-run
+```
+
+Review the dry run, repeat without `--dry-run`, and then treat that passing
+tuple as the base for a normal promotion. Normal promotion moves it into
+`previous`, removes the degraded rollback marker, and keeps the original failed
+baseline only as historical emergency provenance. The repository becomes
+`certified` only when every consumer has exact passing `current` and `previous`
+tuples. Never use bootstrap to replace an existing previous tuple or to certify
+a baseline already known to fail.
 
 ## Rollback
 

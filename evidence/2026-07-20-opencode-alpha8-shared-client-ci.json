@@ -1,0 +1,107 @@
+{
+  "schema_version": 1,
+  "kind": "shared-client-and-lockstep-certification",
+  "status": "pass",
+  "certification_scope": "shared-ruby-rest-sse-and-rails-lockstep",
+  "publication_state": "unpublished",
+  "clients": {
+    "opencode_ruby": {
+      "version": "0.0.1.alpha8",
+      "commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766"
+    },
+    "opencode_rails": {
+      "version": "0.0.1.alpha8",
+      "commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+      "runtime_opencode_ruby_commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766"
+    }
+  },
+  "github_workflow": {
+    "run_id": "29725021192",
+    "run_attempt": "1",
+    "head_sha": "328fa39c557d598ad09b270ad1ceab19901031cd",
+    "repository": "ajaynomics/opencode-compat",
+    "run_url": "https://github.com/ajaynomics/opencode-compat/actions/runs/29725021192",
+    "completed_at": "2026-07-20T07:34:59Z",
+    "status": "pass",
+    "artifact_retention_days": 30
+  },
+  "gitea_workflow": {
+    "run_id": "2717",
+    "head_sha": "328fa39c557d598ad09b270ad1ceab19901031cd",
+    "repository": "ajaynomics/opencode-compat",
+    "run_url": "https://gitea.ajay.to/ajaynomics/opencode-compat/actions/runs/2717",
+    "completed_at": "2026-07-20T07:36:06Z",
+    "status": "pass",
+    "artifact_evidence_claimed": false
+  },
+  "fixture_contract": {
+    "checked_at": "2026-07-20T07:34:34Z",
+    "fixture_count": 7,
+    "status": "pass"
+  },
+  "rails_lockstep": [
+    {
+      "ruby_runtime_version": "3.2.11",
+      "status": "pass"
+    },
+    {
+      "ruby_runtime_version": "3.3.12",
+      "status": "pass"
+    },
+    {
+      "ruby_runtime_version": "3.4.10",
+      "status": "pass"
+    },
+    {
+      "ruby_runtime_version": "4.0.6",
+      "status": "pass"
+    }
+  ],
+  "exact_image_contracts": [
+    {
+      "id": "upstream-1.16.1",
+      "checked_at": "2026-07-20T07:34:50Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      "reported_version": "1.16.1",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn"]
+    },
+    {
+      "id": "upstream-1.17.18",
+      "checked_at": "2026-07-20T07:34:55Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      "reported_version": "1.17.18",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["plugin-ledger"]
+    },
+    {
+      "id": "upstream-1.18.3",
+      "checked_at": "2026-07-20T07:34:48Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      "reported_version": "1.18.3",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"]
+    }
+  ],
+  "certified_at": "2026-07-20T07:36:06Z",
+  "limitations": [
+    "The exact-image contracts execute opencode-ruby, not opencode-rails.",
+    "Rails persistence and each consumer application profile require separate passing evidence.",
+    "The exact client commits are certified candidates but remain unpublished until RubyGems trusted publishers are configured and registry publication is verified."
+  ]
+}

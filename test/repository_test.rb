@@ -1,6 +1,7 @@
 # frozen_string_literal: true
 
 require "json"
+require "digest"
 require "minitest/autorun"
 require_relative "../lib/opencode_compat/client_candidate"
 require_relative "../lib/opencode_compat/runtime_tuple_promoter"
@@ -48,7 +49,14 @@ class RepositoryTest < Minitest::Test
       assert_equal ["ruby-rest-sse"], target.fetch("profiles")
       assert_equal "shared-client-contract-only",
         target.fetch("certification_scope", "shared-client-contract-only")
-      assert_equal "pending", target.fetch("certification_status")
+      assert_equal "certified", target.fetch("certification_status")
+      current = target.fetch("current_certification")
+      assert_equal "certified", current.fetch("status")
+      assert_match(/\A[0-9a-f]{40}\z/, current.fetch("client_commit"))
+      assert_match(/\A[0-9a-f]{40}\z/, current.fetch("rails_commit"))
+      assert_equal current.fetch("expected_text"), current.fetch("full_text")
+      assert_equal 1, current.fetch("llm_request_count")
+      assert_path_exists File.join(ROOT, current.fetch("evidence"))
       previous = target["previous_certification"]
       next unless previous
 
@@ -88,22 +96,29 @@ class RepositoryTest < Minitest::Test
     assert_equal clients.fetch("opencode-ruby").fetch("ref"), dependency.fetch("ref")
   end
 
-  def test_image_matrix_is_pending_and_bound_to_the_exact_client_candidate
+  def test_image_matrix_is_certified_and_bound_to_the_exact_unpublished_client_candidate
     candidate = json("manifests/client-candidate.json")
     clients = candidate.fetch("clients")
     matrix_candidate = json("manifests/image-matrix.json").fetch("client_candidate")
 
-    assert_equal "pending", matrix_candidate.fetch("certification_status")
+    assert_equal "certified", matrix_candidate.fetch("certification_status")
+    assert_equal "unpublished", matrix_candidate.fetch("publication_state")
+    assert_path_exists File.join(ROOT, matrix_candidate.fetch("evidence"))
     assert_equal candidate.fetch("release_train"), matrix_candidate.fetch("release_train")
     assert_equal candidate.fetch("publication_state"), matrix_candidate.fetch("publication_state")
     assert_equal clients.dig("opencode-ruby", "ref"), matrix_candidate.fetch("opencode_ruby_commit")
     assert_equal clients.dig("opencode-rails", "ref"), matrix_candidate.fetch("opencode_rails_commit")
 
     json("manifests/image-matrix.json").fetch("host_canary").each do |target|
-      assert_equal "pending", target.fetch("certification_status")
+      assert_equal "certified", target.fetch("certification_status")
+      current = target.fetch("current_certification")
+      assert_equal "certified", current.fetch("status")
+      assert_match(/\A[0-9a-f]{40}\z/, current.fetch("client_commit"))
+      assert_path_exists File.join(ROOT, current.fetch("evidence"))
       previous = target.fetch("previous_certification")
-      assert_includes %w[candidate-certified certified], previous.fetch("status")
+      assert_equal "certified", previous.fetch("status")
       assert_match(/\A[0-9a-f]{40}\z/, previous.fetch("client_commit"))
+      assert_path_exists File.join(ROOT, previous.fetch("evidence"))
     end
   end
 
@@ -127,6 +142,32 @@ class RepositoryTest < Minitest::Test
       assert_equal 1, check.fetch("llm_request_count")
     end
     assert evidence.fetch("limitations").any? { |entry| entry.include?("remain unverified") }
+  end
+
+  def test_alpha8_ci_evidence_certifies_shared_and_lockstep_scopes_without_claiming_apps
+    evidence = json("evidence/2026-07-20-opencode-alpha8-shared-client-ci.json")
+    candidate = json("manifests/client-candidate.json").fetch("clients")
+
+    assert_equal "pass", evidence.fetch("status")
+    assert_equal "unpublished", evidence.fetch("publication_state")
+    assert_equal candidate.dig("opencode-ruby", "ref"), evidence.dig("clients", "opencode_ruby", "commit")
+    assert_equal candidate.dig("opencode-rails", "ref"), evidence.dig("clients", "opencode_rails", "commit")
+    assert_equal "29725021192", evidence.dig("github_workflow", "run_id")
+    assert_equal "2717", evidence.dig("gitea_workflow", "run_id")
+    assert_equal false, evidence.dig("gitea_workflow", "artifact_evidence_claimed")
+    assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("github_workflow", "completed_at")
+    assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("gitea_workflow", "completed_at")
+    assert_equal %w[3.2.11 3.3.12 3.4.10 4.0.6],
+      evidence.fetch("rails_lockstep").map { |entry| entry.fetch("ruby_runtime_version") }
+    assert evidence.fetch("rails_lockstep").all? { |entry| entry.fetch("status") == "pass" }
+    assert_equal 3, evidence.fetch("exact_image_contracts").length
+    evidence.fetch("exact_image_contracts").each do |contract|
+      assert_equal "pass", contract.fetch("status")
+      assert_equal contract.fetch("expected_text"), contract.fetch("full_text")
+      assert_equal 1, contract.fetch("authoritative_assistant_message_count")
+      assert_equal 1, contract.fetch("llm_request_count")
+    end
+    assert evidence.fetch("limitations").any? { |entry| entry.include?("application profile") }
   end
 
   def test_certified_migration_keeps_previous_tuple
@@ -155,7 +196,7 @@ class RepositoryTest < Minitest::Test
   def test_runtime_tuples_use_full_commits_and_no_mutable_registry_coordinate
     tuples = json("manifests/runtime-tuples.json")
     tuples.fetch("consumers").each_value do |consumer|
-      %w[current candidate previous].each do |slot|
+      %w[current candidate previous emergency_provenance].each do |slot|
         tuple = consumer[slot]
         next unless tuple
 
@@ -176,37 +217,83 @@ class RepositoryTest < Minitest::Test
     end
   end
 
-  def test_failed_alpha2_baselines_block_promotion_instead_of_becoming_previous
+  def test_failed_alpha2_baselines_remain_uncertified_emergency_provenance
     tuples = json("manifests/runtime-tuples.json")
     readiness = tuples.fetch("promotion_readiness")
 
-    assert_equal "blocked", readiness.fetch("status")
-    assert_path_exists File.join(ROOT, readiness.fetch("evidence"))
+    assert_equal "certified", tuples.fetch("migration_state")
+    assert_equal "certified", readiness.fetch("status")
     tuples.fetch("consumers").each_value do |consumer|
-      assert_equal "observed-production-contract-failed", consumer.dig("current", "status")
-      assert_nil consumer.fetch("previous")
+      emergency = consumer.fetch("emergency_provenance")
+      assert_equal "observed-production-contract-failed", emergency.fetch("status")
+      refute emergency.key?("certification")
+      assert_equal "certified", consumer.dig("current", "status")
+      assert_equal "0.0.1.alpha8", consumer.dig("current", "opencode_ruby", "version")
+      assert_equal "certified", consumer.dig("previous", "status")
+      assert_equal "0.0.1.alpha7", consumer.dig("previous", "opencode_ruby", "version")
+      refute consumer.key?("rollback_state")
     end
   end
 
-  def test_candidate_evidence_is_bound_to_complete_tuple_fingerprints
+  def test_platform_one_click_targets_are_explicitly_uncertified_and_separate
+    consumers = json("manifests/runtime-tuples.json").fetch("consumers")
+
+    %w[travelwolf mushu].each do |name|
+      rollback = consumers.fetch(name).fetch("immediate_platform_rollback")
+      assert_match(/\Auncertified-/, rollback.fetch("status"))
+      assert_match(/\A[0-9a-f]{40}\z/, rollback.fetch("consumer_commit"))
+      assert_match(/\A[0-9a-f]{40}\z/, rollback.dig("opencode_ruby", "git_commit"))
+      refute rollback.key?("certification")
+      refute_equal consumers.dig(name, "previous", "consumer_commit"), rollback.fetch("consumer_commit")
+    end
+
+    travelwolf_runtime = consumers.dig("travelwolf", "immediate_platform_rollback", "runtime")
+    assert_match(/@sha256:[0-9a-f]{64}\z/, travelwolf_runtime.fetch("image"))
+    assert_match(/\Asha256:[0-9a-f]{64}\z/, travelwolf_runtime.fetch("application_image_id"))
+
+    mushu_runtime = consumers.dig("mushu", "immediate_platform_rollback", "runtime")
+    assert_match(/@sha256:[0-9a-f]{64}\z/, mushu_runtime.fetch("registry_ref"))
+    assert_nil mushu_runtime.fetch("application_image")
+    assert_equal "not-retained", mushu_runtime.fetch("application_image_provenance")
+  end
+
+  def test_certified_tuple_evidence_is_bound_to_complete_tuple_fingerprints
     promoter = OpenCodeCompat::RuntimeTuplePromoter.new(root: ROOT)
-    evidence_paths = {
-      "ajent-rails" => "evidence/2026-07-18-ajent-rails-alpha7-candidate.json",
-      "travelwolf" => "evidence/2026-07-18-travelwolf-alpha7-candidate.json",
-      "mushu" => "evidence/2026-07-18-mushu-alpha7-candidate.json"
-    }
 
-    evidence_paths.each do |consumer, path|
-      evidence = json(path)
-      fingerprints = promoter.fingerprints(
-        consumer: consumer,
-        consumer_commit: evidence.fetch("consumer_commit")
-      )
+    json("manifests/runtime-tuples.json").fetch("consumers").each do |consumer, entry|
+      profile = entry.fetch("profile")
+      %w[current previous].each do |slot|
+        tuple = entry.fetch(slot)
+        fingerprint = promoter.send(:tuple_fingerprint, tuple, consumer: consumer, profile: profile)
+        certification = tuple.fetch("certification")
+        promoter.send(
+          :validate_recorded_certification!,
+          tuple,
+          consumer: consumer,
+          profile: profile,
+          expected_fingerprint: fingerprint,
+          label: "#{consumer} #{slot}"
+        )
 
-      assert_equal consumer, evidence.fetch("consumer")
-      assert_equal fingerprints.fetch("profile"), evidence.fetch("profile")
-      assert_equal fingerprints.fetch("candidate_tuple_sha256"), evidence.fetch("tuple_sha256")
-      assert_equal "pass", evidence.fetch("status")
+        assert_equal "certified", tuple.fetch("status")
+        assert_equal "pass", certification.fetch("status")
+        assert_equal fingerprint, certification.fetch("tuple_sha256")
+        refute_empty certification.fetch("evidence")
+
+        certification.fetch("evidence").each do |reference|
+          assert_equal %w[path sha256], reference.keys.sort
+          path = reference.fetch("path")
+          bytes = File.binread(File.join(ROOT, path))
+          assert_equal "sha256:#{Digest::SHA256.hexdigest(bytes)}", reference.fetch("sha256")
+          evidence = json(path)
+          assert_equal consumer, evidence.fetch("consumer")
+          assert_equal profile, evidence.fetch("profile")
+          assert_equal tuple.fetch("consumer_commit"), evidence.fetch("consumer_commit")
+          assert_equal certification.fetch("certified_at"), evidence.fetch("certified_at")
+          assert_equal fingerprint, evidence.fetch("tuple_sha256")
+          assert_equal "pass", evidence.fetch("status")
+        end
+      end
     end
   end
 

@@ -1,0 +1,68 @@
+{
+  "schema_version": 1,
+  "consumer": "mushu",
+  "profile": "ruby-rest-sse",
+  "consumer_commit": "af2e9b0ce7ccacf49500450595a67c765a9d617a",
+  "consumer_tree": "f43f48972ab444310508e9067831dfc6977f1a24",
+  "status": "pass",
+  "certified_at": "2026-07-20T06:39:46.921805Z",
+  "tuple_sha256": "sha256:8d7d3cb2d3e2d920c900a9c1ada365026872904588cff0b166903d1d6d32183f",
+  "clients": {
+    "opencode_ruby": {
+      "version": "0.0.1.alpha7",
+      "commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+    },
+    "opencode_rails": null
+  },
+  "runtime": {
+    "registry_ref": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+    "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+    "custom_opencode_source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+    "build_source_commit": null,
+    "reported_version": "0.0.0-permission-shortcuts-202606300721",
+    "provenance_strength": "one-time-tag-source-attestation"
+  },
+  "source_availability": {
+    "origin_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719",
+    "backup_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719",
+    "status": "archived"
+  },
+  "shared_contract": {
+    "review_input": "opencode-compat-mushu-final-head.json",
+    "review_input_path_at_capture": "/tmp/opencode-compat-mushu-final-head.json",
+    "review_input_sha256": "sha256:57bf4b4f3c65159de4476b530aa0bc9b6077f1eacc69f7ea404f02314cb9760c",
+    "status": "pass"
+  },
+  "application_canary": {
+    "started_at": "2026-07-20T06:37:55Z",
+    "completed_at": "2026-07-20T06:39:46.921805Z",
+    "successful_turn_count": 13,
+    "turn_count": 13,
+    "successful_conversation_count": 6,
+    "conversation_count": 6,
+    "successful_mcp_context_count": 7,
+    "mcp_context_count": 7,
+    "database_sha256": "sha256:a567d2ff9a906c9b78831bb6fa43153af539f1e76ee63bf35961472f55651d74",
+    "log_sha256": "sha256:a35a83b003a1f082b8a721b3faad8b35cb71dc9d1ceaedfc3cec3b26916e85b9",
+    "clean_worktree": true,
+    "status": "pass"
+  },
+  "raw_artifact_retention": "raw clean-worktree database and log artifacts are ephemeral; durable counts, hashes, and sanitized results are retained in this committed evidence document",
+  "forge_ci": {
+    "status": "not_run",
+    "run_ids": [],
+    "reason": "The frozen snapshot predates a runner-only empty-system-test repair. Earlier runs 2588 and 2590 tested different commits and are deliberately not attributed to this tuple."
+  },
+  "rollback_operability": {
+    "source_archived_on_all_remotes": true,
+    "prebuilt_application_image_retained": false,
+    "application_rebuild_required": true,
+    "immediate_platform_rollback_is_certified_tuple": false,
+    "immediate_platform_rollback_commit": "82ca30b18e1f38b55e2bed91cbd46f1eaf4a5922",
+    "reason": "The retained one-click application rollback uses alpha2 and the old runtime; the certified compatibility rollback is this alpha7 source tuple."
+  },
+  "limitations": [
+    "The old runtime image metadata does not recover an exact Mushu overlay-build commit.",
+    "No exact-head forge run is claimed; the clean-worktree full application canary is the application evidence."
+  ]
+}

@@ -93,10 +93,12 @@ and must not be described as review evidence. A person must review a passing
 GitHub artifact and commit the durable certification document under `evidence/`;
 no workflow commits or promotes its own result.
 
-`manifests/image-matrix.json` binds the active pending matrix to both candidate
-commits. Its `previous_certification` entries preserve the last alpha7 result;
-they do not certify alpha8. Ajent and Mushu custom-image rows remain pending
-until their host canaries run against this exact pair.
+`manifests/image-matrix.json` binds the certified shared-client matrix to both
+exact, unpublished alpha8 commits. Each public row is explicitly scoped to the
+shared Ruby/SSE contract; its separate `required_consumer_profiles` are not
+implied by that result. The host rows bind the Ajent, Travelwolf, and Mushu
+application canaries to their exact current alpha8 and previous alpha7 consumer
+commits and durable evidence documents.
 
 The checked-in alpha8 local exact-image result is explicitly marked
 `not-certified` and `shared-client-contract-only`. It proves the Ruby/SSE probe
@@ -122,7 +124,9 @@ durable certification documents and Git history are the archive. This keeps a
 fast-moving upstream from making every future run retest every old release.
 
 See [docs/certification.md](docs/certification.md) for promotion, canary, and
-rollback evidence requirements.
+rollback evidence requirements, and [docs/maintenance.md](docs/maintenance.md)
+for consumer ownership, release order, runner boundaries, and expected failure
+modes.
 
 ## License
 

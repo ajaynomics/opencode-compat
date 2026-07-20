@@ -1,0 +1,84 @@
+{
+  "schema_version": 1,
+  "consumer": "travelwolf",
+  "profile": "rails-persisted-turn",
+  "consumer_commit": "02aed70eb4de201c6510e3be583699f8eb984ce7",
+  "consumer_tree": "f436a7248d90e5ae9e84c45f264acd913a4162aa",
+  "status": "pass",
+  "certified_at": "2026-07-20T06:51:48Z",
+  "tuple_sha256": "sha256:0321c4246bed6ab62587924a83204a9e2ca7517b1dec5e4aef35dcac400fcc8e",
+  "clients": {
+    "publication_state": "unpublished",
+    "opencode_ruby": {
+      "version": "0.0.1.alpha8",
+      "commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766"
+    },
+    "opencode_rails": {
+      "version": "0.0.1.alpha8",
+      "commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f"
+    }
+  },
+  "runtime": {
+    "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+    "reported_version": "1.16.1"
+  },
+  "forge_ci": {
+    "pr": {
+      "run_id": "2702",
+      "job_id": "11920",
+      "status": "pass",
+      "started_at": "2026-07-20T06:33:58Z",
+      "completed_at": "2026-07-20T06:35:29Z"
+    },
+    "main": {
+      "run_id": "2704",
+      "job_id": "11933",
+      "status": "pass",
+      "started_at": "2026-07-20T06:36:57Z",
+      "completed_at": "2026-07-20T06:38:11Z"
+    }
+  },
+  "shared_contract": {
+    "review_input_path_at_capture": "/data/projects/travelwolf/.worktrees/opencode-alpha8-candidate-20260720/tmp/opencode-alpha8-shared-contract-02aed70e.json",
+    "review_input_sha256": "sha256:f63edbafba8fb7646d1c88e33472636af56770110d920006211b4ff3f115b977",
+    "durable_ci_evidence": "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
+    "expected_text": "compat-ok",
+    "full_text": "compat-ok",
+    "authoritative_assistant_message_count": 1,
+    "llm_request_count": 1,
+    "status": "pass"
+  },
+  "application_canary": {
+    "review_input_path_at_capture": "/data/projects/travelwolf/.worktrees/opencode-alpha8-candidate-20260720/tmp/opencode-alpha8-application-02aed70e.json",
+    "review_input_sha256": "sha256:6f4dfe14a74bb84c13cf566302222f737603d2fbafa7231c7bb332a2567bca24",
+    "offline_input_path_at_capture": "/data/projects/travelwolf/.worktrees/opencode-alpha8-candidate-20260720/tmp/opencode-alpha8-offline-contract-02aed70e.json",
+    "offline_input_sha256": "sha256:4e8157fbb44d6fd0346bea79aee1271e400cd7fde57bc8a45afa77250134029c",
+    "checked_at": "2026-07-20T06:31:13.506Z",
+    "final_text": "TRAVELWOLF_ALPHA8_CANARY_OK",
+    "application_prompt_count": 1,
+    "user_turn_count": 1,
+    "authoritative_assistant_turn_count": 1,
+    "child_turn_count": 0,
+    "model_request_count_observed": false,
+    "cleanup_status": "pass",
+    "status": "pass"
+  },
+  "raw_artifact_retention": "ephemeral clean-worktree files; durable sanitized results and hashes are retained in this committed evidence document",
+  "production": {
+    "checked_at": "2026-07-20T06:51:48Z",
+    "application_tag_provenance": "127.0.0.1:5000/travelwolf:02aed70eb4de201c6510e3be583699f8eb984ce7",
+    "application_image_id": "sha256:031371e20f34e1014712ddc668b4e182483664bb70f116b683c0ec83d6668338",
+    "application_image_created_at": "2026-07-20T06:42:55.929825054Z",
+    "internal_health_status": 200,
+    "authenticated_public_health_status": 200,
+    "container_status": "running",
+    "deployment_mode": "manual-isolated-kamal",
+    "status": "pass"
+  },
+  "rollback_operability": {
+    "certified_previous_consumer_commit": "531011defe4acc45a15ffe44a8e9da9cb610aaac",
+    "immediate_platform_rollback_is_certified_tuple": false,
+    "immediate_platform_rollback_commit": "8494c52d11bf2995c378398e977d82d06a09e046",
+    "immediate_platform_rollback_image_id": "sha256:4291b256b37eeb694435093655db17154c837e53335b8d0eb8f1b07a744e856e"
+  }
+}
