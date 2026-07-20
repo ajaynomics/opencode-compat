@@ -170,6 +170,10 @@ class WatcherTest < Minitest::Test
   def test_workflow_can_only_update_manifests_and_open_a_pr
     workflow = File.read(File.join(ROOT, ".github/workflows/watch-upstream.yml"))
 
+    assert_match(
+      /\n  open-compatibility-pr:\n    if: github\.server_url == 'https:\/\/github\.com'\n    runs-on:/,
+      workflow
+    )
     assert_includes workflow, "contents: write"
     assert_includes workflow, "pull-requests: write"
     assert_includes workflow, "git add manifests/image-matrix.json manifests/upstream.json"
