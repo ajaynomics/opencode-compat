@@ -1,0 +1,76 @@
+{
+  "schema_version": 1,
+  "consumer": "ajent-rails",
+  "profile": "rails-persisted-turn",
+  "consumer_commit": "6caa0132e4b172777126ed537de99cb7e9758e0b",
+  "consumer_tree": "29e6cd35313a06cef6f9c1f40a36e3ee582fd035",
+  "status": "pass",
+  "certified_at": "2026-07-20T08:14:53Z",
+  "tuple_sha256": "sha256:ae48333ba453f442d14263a916418a384f576db34d09a503111fc28c340eb408",
+  "clients": {
+    "opencode_ruby": {
+      "version": "0.0.1.alpha7",
+      "commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798"
+    },
+    "opencode_rails": {
+      "version": "0.0.1.alpha7",
+      "commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb"
+    }
+  },
+  "runtime": {
+    "application_image": "docker-registry:5000/ajent_rails@sha256:fe6fdc2325d304ddb276df7d35807c183e7e574876a0d76a6c6de6014619c76e",
+    "aigl_image": "docker-registry:5000/opencode-aigl@sha256:f4064cb8b7a0f680f076dba9c72ba8e63b1457227c9fad5aa1407f0e0aac12e7",
+    "blackline_image": "docker-registry:5000/opencode-blackline@sha256:7b4ea4d70ff5fd35e3b17c571865dd6bb489217c7c00942e8569132fe2f749c8",
+    "raven_image": "docker-registry:5000/opencode-raven@sha256:9fe37ee88d8b10165e17f5f2a5c47b2396256464e732b4ef49138fb92a1234e3",
+    "reported_version": "1.18.3",
+    "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+  },
+  "consumer_verification": {
+    "test_runs": 4247,
+    "assertions": 15740,
+    "failures": 0,
+    "errors": 0,
+    "skips": 4,
+    "rubocop_files": 1430,
+    "status": "pass"
+  },
+  "application_canary": {
+    "products": [
+      {
+        "id": "aigl",
+        "agent": "travel-agent",
+        "model": "openai-gpt-5.5",
+        "final_text": "CANARY_OK",
+        "status": "pass"
+      },
+      {
+        "id": "blackline",
+        "agent": "employment-lawyer",
+        "model": "moonshot-kimi-k2.5",
+        "final_text": "CANARY_OK",
+        "status": "pass"
+      },
+      {
+        "id": "raven",
+        "agent": "raven-legal",
+        "model": "moonshot-kimi-k2.5",
+        "final_text": "CANARY_OK",
+        "status": "pass"
+      }
+    ],
+    "session_cleanup_status": "pass",
+    "status": "pass"
+  },
+  "source_availability": {
+    "origin_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720",
+    "backup_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720",
+    "github_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720",
+    "status": "pass"
+  },
+  "rollback_operability": {
+    "source_archived_on_all_remotes": true,
+    "prebuilt_application_image_retained": true,
+    "application_rebuild_required": false,
+    "deployed": false
+  }
+}

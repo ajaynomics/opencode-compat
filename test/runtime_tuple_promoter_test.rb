@@ -17,6 +17,9 @@ class RuntimeTuplePromoterTest < Minitest::Test
   RAILS_CURRENT = "5" * 40
   RAILS_CANDIDATE = "6" * 40
   RAILS_NEXT = "9" * 40
+  CURRENT_TREE = "a" * 40
+  CANDIDATE_TREE = "b" * 40
+  NEXT_TREE = "c" * 40
   CURRENT_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'a' * 64}"
   CANDIDATE_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'b' * 64}"
   NEXT_IMAGE = "ghcr.io/anomalyco/opencode@sha256:#{'c' * 64}"
@@ -54,10 +57,12 @@ class RuntimeTuplePromoterTest < Minitest::Test
     assert_equal RUBY_CANDIDATE, consumer.dig("current", "opencode_ruby", "git_commit")
     assert_equal "certified", consumer.dig("current", "status")
     assert_equal candidate.fetch("tuple_sha256"), consumer.dig("current", "certification", "tuple_sha256")
+    assert_equal evidence_reference(candidate), consumer.dig("current", "certification", "evidence", 0)
     assert_equal CURRENT_COMMIT, consumer.dig("previous", "consumer_commit")
     assert_equal RUBY_CURRENT, consumer.dig("previous", "opencode_ruby", "git_commit")
     assert_equal "certified", consumer.dig("previous", "status")
     assert_equal previous.fetch("tuple_sha256"), consumer.dig("previous", "certification", "tuple_sha256")
+    assert_equal evidence_reference(previous), consumer.dig("previous", "certification", "evidence", 0)
     assert_equal "certified", promoted.fetch("migration_state")
     assert_equal promoted, JSON.parse(File.read(manifest_path))
   end
@@ -124,6 +129,41 @@ class RuntimeTuplePromoterTest < Minitest::Test
       @promoter.fingerprints(consumer: CONSUMER, consumer_commit: CANDIDATE_COMMIT)
     end
     assert_match(/full 40-character/, error.message)
+  end
+
+  def test_rejects_malformed_immutable_tuple_coordinates_but_allows_unknown_build_source
+    mutations = {
+      "consumer tree" => lambda { |candidate| candidate["consumer_tree"] = "abc123" },
+      "build source commit" => lambda { |candidate| candidate.fetch("runtime")["build_source_commit"] = "abc123" },
+      "rollback commit" => lambda do |candidate|
+        candidate["rollback_operability"] = {"immediate_platform_rollback_commit" => "abc123"}
+      end,
+      "artifact digest" => lambda do |candidate|
+        candidate["application_canary"] = {"database_sha256" => "sha256:abc123"}
+      end
+    }
+
+    mutations.each do |label, mutate|
+      manifest = valid_manifest
+      mutate.call(manifest.dig("consumers", CONSUMER, "candidate"))
+      write_manifest(manifest)
+
+      error = assert_raises(OpenCodeCompat::PromotionError, label) do
+        @promoter.fingerprints(consumer: CONSUMER, consumer_commit: CANDIDATE_COMMIT)
+      end
+      assert_match(/full 40-character|exact sha256 digest/, error.message, label)
+    end
+
+    manifest = valid_manifest
+    manifest.dig("consumers", CONSUMER, "candidate", "runtime")["build_source_commit"] = nil
+    write_manifest(manifest)
+    assert_match(
+      /\Asha256:[0-9a-f]{64}\z/,
+      @promoter.fingerprints(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT
+      ).fetch("candidate_tuple_sha256")
+    )
   end
 
   def test_rejects_missing_server_version_or_unknown_profile
@@ -358,6 +398,114 @@ class RuntimeTuplePromoterTest < Minitest::Test
     assert_equal before, File.binread(manifest_path)
   end
 
+  def test_hash_binds_evidence_and_accepts_a_structured_reference
+    candidate, previous = write_matching_evidence
+    structured_candidate = evidence_reference(candidate)
+    structured_previous = evidence_reference(previous)
+
+    promoted = @promoter.promote(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, candidate).merge("evidence" => [structured_candidate]),
+      previous_certification: certification(CURRENT_TIME, previous).merge("evidence" => [structured_previous]),
+      dry_run: true
+    )
+
+    assert_equal structured_candidate, promoted.dig("consumers", CONSUMER, "current", "certification", "evidence", 0)
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.promote(
+        consumer: CONSUMER,
+        consumer_commit: CANDIDATE_COMMIT,
+        certification: certification(CANDIDATE_TIME, candidate).merge(
+          "evidence" => [structured_candidate.merge("sha256" => "sha256:#{'0' * 64}")]
+        ),
+        previous_certification: certification(CURRENT_TIME, previous).merge("evidence" => [structured_previous]),
+        dry_run: true
+      )
+    end
+    assert_match(/has sha256=.*expected/, error.message)
+  end
+
+  def test_rejects_evidence_coordinates_that_disagree_with_the_tuple
+    mutations = {
+      "consumer_tree" => lambda { |document| document["consumer_tree"] = "f" * 40 },
+      "opencode_ruby.commit" => lambda do |document|
+        document["clients"] = {
+          "opencode_ruby" => {"version" => "0.0.1.alpha7", "commit" => "f" * 40}
+        }
+      end,
+      "runtime.image" => lambda do |document|
+        document["runtime"] = {
+          "image" => "ghcr.io/anomalyco/opencode@sha256:#{'f' * 64}",
+          "reported_version" => "1.18.3"
+        }
+      end
+    }
+
+    mutations.each do |field, mutate|
+      write_manifest(valid_manifest)
+      candidate, previous = write_matching_evidence
+      path = File.join(@root, candidate.fetch("path"))
+      document = JSON.parse(File.read(path))
+      mutate.call(document)
+      File.write(path, JSON.pretty_generate(document) + "\n")
+
+      error = assert_raises(OpenCodeCompat::PromotionError, field) do
+        @promoter.promote(
+          consumer: CONSUMER,
+          consumer_commit: CANDIDATE_COMMIT,
+          certification: certification(CANDIDATE_TIME, candidate),
+          previous_certification: certification(CURRENT_TIME, previous),
+          dry_run: true
+        )
+      end
+      assert_match(/#{Regexp.escape(field)}/, error.message, field)
+    end
+  end
+
+  def test_recorded_certifications_require_hash_bound_evidence_references
+    candidate, previous = write_matching_evidence
+    promoted = @promoter.promote(
+      consumer: CONSUMER,
+      consumer_commit: CANDIDATE_COMMIT,
+      certification: certification(CANDIDATE_TIME, candidate),
+      previous_certification: certification(CURRENT_TIME, previous)
+    )
+    consumer = promoted.dig("consumers", CONSUMER)
+    consumer.dig("current", "certification")["evidence"] = [candidate.fetch("path")]
+    consumer["candidate"] = {
+      "status" => "compatibility-certified",
+      "certified_at" => NEXT_TIME,
+      "consumer_commit" => NEXT_COMMIT,
+      "consumer_tree" => NEXT_TREE,
+      "opencode_ruby" => {"version" => "0.0.1.alpha8", "git_commit" => RUBY_NEXT},
+      "opencode_rails" => {"version" => "0.0.1.alpha8", "git_commit" => RAILS_NEXT},
+      "runtime" => {"image" => NEXT_IMAGE, "reported_version" => "1.19.0"}
+    }
+    write_manifest(promoted)
+    fingerprint = @promoter.fingerprints(
+      consumer: CONSUMER,
+      consumer_commit: NEXT_COMMIT
+    ).fetch("candidate_tuple_sha256")
+    next_evidence = write_evidence(
+      "next-after-legacy-reference.json",
+      commit: NEXT_COMMIT,
+      timestamp: NEXT_TIME,
+      fingerprint: fingerprint
+    )
+
+    error = assert_raises(OpenCodeCompat::PromotionError) do
+      @promoter.promote(
+        consumer: CONSUMER,
+        consumer_commit: NEXT_COMMIT,
+        certification: certification(NEXT_TIME, next_evidence),
+        dry_run: true
+      )
+    end
+    assert_match(/hash-bound \{path, sha256\}/, error.message)
+  end
+
   def test_rejects_non_passing_or_implicit_certification_metadata
     candidate, previous = write_matching_evidence
 
@@ -424,6 +572,7 @@ class RuntimeTuplePromoterTest < Minitest::Test
           "current" => {
             "status" => "observed-production",
             "consumer_commit" => CURRENT_COMMIT,
+            "consumer_tree" => CURRENT_TREE,
             "opencode_ruby" => {"version" => "0.0.1.alpha2", "git_commit" => RUBY_CURRENT},
             "opencode_rails" => {"version" => "0.0.1.alpha2", "git_commit" => RAILS_CURRENT},
             "runtime" => {"image" => CURRENT_IMAGE, "reported_version" => "1.16.1"}
@@ -431,6 +580,7 @@ class RuntimeTuplePromoterTest < Minitest::Test
           "candidate" => {
             "status" => "compatibility-certified",
             "certified_at" => "2026-07-18T10:00:00Z",
+            "consumer_tree" => CANDIDATE_TREE,
             "opencode_ruby" => {"version" => "0.0.1.alpha7", "git_commit" => RUBY_CANDIDATE},
             "opencode_rails" => {"version" => "0.0.1.alpha7", "git_commit" => RAILS_CANDIDATE},
             "runtime" => {"image" => CANDIDATE_IMAGE, "reported_version" => "1.18.3"}
@@ -478,6 +628,14 @@ class RuntimeTuplePromoterTest < Minitest::Test
       "status" => "pass",
       "certified_at" => timestamp,
       "evidence" => [evidence.fetch("path")]
+    }
+  end
+
+  def evidence_reference(evidence)
+    path = evidence.fetch("path")
+    {
+      "path" => path,
+      "sha256" => "sha256:#{Digest::SHA256.file(File.join(@root, path)).hexdigest}"
     }
   end
 

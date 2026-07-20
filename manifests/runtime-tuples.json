@@ -1,16 +1,200 @@
 {
   "schema_version": 1,
-  "migration_state": "candidate",
+  "migration_state": "certified",
   "promotion_readiness": {
-    "status": "blocked",
-    "reason": "Every observed alpha2 baseline fails the hardened exact-final-text contract, so none can be certified as the previous rollback tuple.",
-    "evidence": "evidence/2026-07-18-opencode-ruby-alpha2-regression.json",
-    "required_action": "Create and canary a distinct rollback consumer commit that pins alpha7 and the exact runtime before promoting any candidate."
+    "status": "certified",
+    "reason": "Every consumer has exact current and previous passing tuples.",
+    "required_action": "Promote only a newly certified, materially changed tuple."
   },
   "consumers": {
     "ajent-rails": {
       "profile": "rails-persisted-turn",
       "current": {
+        "status": "certified",
+        "consumer_commit": "2ec8b879c5a34bb683fa5aaf26b998041d0e1264",
+        "consumer_tree": "a1e044f3a4f5c5ac0510a1d998c4afb55286da5a",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha8",
+          "git_commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+          "source_provenance": "unpublished-exact-commit"
+        },
+        "opencode_rails": {
+          "version": "0.0.1.alpha8",
+          "git_commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+          "source_provenance": "unpublished-exact-commit"
+        },
+        "runtime": {
+          "image": "docker-registry:5000/ajent_rails@sha256:c7b2c6f3c3ffb6af62069c3142a2d76e606b0794077b81c5464add2266b7c350",
+          "application_image": "docker-registry:5000/ajent_rails@sha256:c7b2c6f3c3ffb6af62069c3142a2d76e606b0794077b81c5464add2266b7c350",
+          "aigl_image": "docker-registry:5000/opencode-aigl@sha256:f4064cb8b7a0f680f076dba9c72ba8e63b1457227c9fad5aa1407f0e0aac12e7",
+          "blackline_image": "docker-registry:5000/opencode-blackline@sha256:7b4ea4d70ff5fd35e3b17c571865dd6bb489217c7c00942e8569132fe2f749c8",
+          "raven_image": "docker-registry:5000/opencode-raven@sha256:9fe37ee88d8b10165e17f5f2a5c47b2396256464e732b4ef49138fb92a1234e3",
+          "build_source_commit": "2ec8b879c5a34bb683fa5aaf26b998041d0e1264",
+          "reported_version": "1.18.3",
+          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+        },
+        "application_canary": {
+          "checked_at": "2026-07-20T08:15:17Z",
+          "products": [
+            {
+              "id": "aigl",
+              "agent": "travel-agent",
+              "model": "openai-gpt-5.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            },
+            {
+              "id": "blackline",
+              "agent": "employment-lawyer",
+              "model": "moonshot-kimi-k2.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            },
+            {
+              "id": "raven",
+              "agent": "raven-legal",
+              "model": "moonshot-kimi-k2.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            }
+          ],
+          "session_cleanup_status": "pass",
+          "status": "pass"
+        },
+        "forge_ci": {
+          "pr_run_id": "2718",
+          "main_build_run_id": "2719",
+          "protected_main_run_id": "2720",
+          "deploy_job_id": "12065",
+          "status": "pass"
+        },
+        "production": {
+          "checked_at": "2026-07-20T08:15:17Z",
+          "application_health_status": 200,
+          "blackline_health_status": 200,
+          "ajent_public_status": 308,
+          "voice_contract_status": "pass",
+          "scotus_contract_status": "pass",
+          "status": "pass"
+        },
+        "source_availability": {
+          "origin_main": "2ec8b879c5a34bb683fa5aaf26b998041d0e1264",
+          "backup_main": "2ec8b879c5a34bb683fa5aaf26b998041d0e1264",
+          "github_main": "2ec8b879c5a34bb683fa5aaf26b998041d0e1264",
+          "status": "pass"
+        },
+        "compatibility_certified_at": "2026-07-20T08:15:17Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T08:15:17Z",
+          "tuple_sha256": "sha256:326a87cdb67061bdd36dfcee989ae149511a0c627e857488d59e0f2b3c796720",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-ajent-rails-alpha8-production.json",
+              "sha256": "sha256:1db57a6df214d03a3466ce8668c773723e733f00d08d072dfa55206c3e8b09a1"
+            }
+          ]
+        }
+      },
+      "candidate": null,
+      "previous": {
+        "status": "certified",
+        "consumer_commit": "6caa0132e4b172777126ed537de99cb7e9758e0b",
+        "consumer_tree": "29e6cd35313a06cef6f9c1f40a36e3ee582fd035",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha7",
+          "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
+          "tag_provenance": {
+            "tag": "v0.0.1.alpha7",
+            "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
+          }
+        },
+        "opencode_rails": {
+          "version": "0.0.1.alpha7",
+          "git_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
+          "tag_provenance": {
+            "tag": "v0.0.1.alpha7",
+            "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c"
+          }
+        },
+        "runtime": {
+          "image": "docker-registry:5000/ajent_rails@sha256:fe6fdc2325d304ddb276df7d35807c183e7e574876a0d76a6c6de6014619c76e",
+          "application_image": "docker-registry:5000/ajent_rails@sha256:fe6fdc2325d304ddb276df7d35807c183e7e574876a0d76a6c6de6014619c76e",
+          "aigl_image": "docker-registry:5000/opencode-aigl@sha256:f4064cb8b7a0f680f076dba9c72ba8e63b1457227c9fad5aa1407f0e0aac12e7",
+          "blackline_image": "docker-registry:5000/opencode-blackline@sha256:7b4ea4d70ff5fd35e3b17c571865dd6bb489217c7c00942e8569132fe2f749c8",
+          "raven_image": "docker-registry:5000/opencode-raven@sha256:9fe37ee88d8b10165e17f5f2a5c47b2396256464e732b4ef49138fb92a1234e3",
+          "build_source_commit": "6caa0132e4b172777126ed537de99cb7e9758e0b",
+          "reported_version": "1.18.3",
+          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+        },
+        "application_canary": {
+          "checked_at": "2026-07-20T08:14:53Z",
+          "products": [
+            {
+              "id": "aigl",
+              "agent": "travel-agent",
+              "model": "openai-gpt-5.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            },
+            {
+              "id": "blackline",
+              "agent": "employment-lawyer",
+              "model": "moonshot-kimi-k2.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            },
+            {
+              "id": "raven",
+              "agent": "raven-legal",
+              "model": "moonshot-kimi-k2.5",
+              "final_text": "CANARY_OK",
+              "reported_version": "1.18.3",
+              "status": "pass"
+            }
+          ],
+          "session_cleanup_status": "pass",
+          "status": "pass"
+        },
+        "consumer_verification": {
+          "test_runs": 4247,
+          "assertions": 15740,
+          "failures": 0,
+          "errors": 0,
+          "skips": 4,
+          "rubocop_files": 1430,
+          "status": "pass"
+        },
+        "source_availability": {
+          "origin_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720",
+          "backup_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720",
+          "github_ref": "refs/heads/opencode/opencode-alpha7-rollback-certified-20260720"
+        },
+        "rollback_operability": {
+          "source_archived_on_all_remotes": true,
+          "prebuilt_application_image_retained": true,
+          "application_rebuild_required": false,
+          "deployed": false
+        },
+        "compatibility_certified_at": "2026-07-20T08:14:53Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T08:14:53Z",
+          "tuple_sha256": "sha256:ae48333ba453f442d14263a916418a384f576db34d09a503111fc28c340eb408",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-ajent-rails-alpha7-rollback.json",
+              "sha256": "sha256:c3554a346a6585c7f98fde2aee2ad4f06ef4db7b621c98160183274e9e6ddc5c"
+            }
+          ]
+        }
+      },
+      "emergency_provenance": {
         "status": "observed-production-contract-failed",
         "consumer_commit": "83eed3c247a352842b08fc5cf339c4d0acdaacba",
         "opencode_ruby": {
@@ -27,10 +211,95 @@
           "reported_version": "1.18.3",
           "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
         }
+      }
+    },
+    "travelwolf": {
+      "profile": "rails-persisted-turn",
+      "current": {
+        "status": "certified",
+        "consumer_commit": "02aed70eb4de201c6510e3be583699f8eb984ce7",
+        "consumer_tree": "f436a7248d90e5ae9e84c45f264acd913a4162aa",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha8",
+          "git_commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+          "source_provenance": "unpublished-exact-commit"
+        },
+        "opencode_rails": {
+          "version": "0.0.1.alpha8",
+          "git_commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+          "source_provenance": "unpublished-exact-commit"
+        },
+        "runtime": {
+          "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+          "application_image_id": "sha256:031371e20f34e1014712ddc668b4e182483664bb70f116b683c0ec83d6668338",
+          "reported_version": "1.16.1"
+        },
+        "application_canary": {
+          "checked_at": "2026-07-20T06:31:13.506Z",
+          "final_text": "TRAVELWOLF_ALPHA8_CANARY_OK",
+          "application_prompt_count": 1,
+          "user_turn_count": 1,
+          "authoritative_assistant_turn_count": 1,
+          "child_turn_count": 0,
+          "model_request_count_observed": false,
+          "cleanup_status": "pass",
+          "status": "pass"
+        },
+        "forge_ci": {
+          "status": "pass",
+          "pr_run_id": "2702",
+          "main_run_id": "2704"
+        },
+        "production": {
+          "checked_at": "2026-07-20T06:51:48Z",
+          "application_image_created_at": "2026-07-20T06:42:55.929825054Z",
+          "internal_health_status": 200,
+          "authenticated_public_health_status": 200,
+          "container_status": "running",
+          "deployment_mode": "manual-isolated-kamal",
+          "status": "pass"
+        },
+        "rollback_operability": {
+          "certified_previous_consumer_commit": "531011defe4acc45a15ffe44a8e9da9cb610aaac",
+          "immediate_platform_rollback_is_certified_tuple": false,
+          "immediate_platform_rollback_commit": "8494c52d11bf2995c378398e977d82d06a09e046"
+        },
+        "compatibility_certified_at": "2026-07-20T06:51:48Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T06:51:48Z",
+          "tuple_sha256": "sha256:0321c4246bed6ab62587924a83204a9e2ca7517b1dec5e4aef35dcac400fcc8e",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-travelwolf-alpha8-production.json",
+              "sha256": "sha256:ab8d8de768d415b3a68090507fb6ec40bdfad439fcaf0471beea4f52450e9d2f"
+            }
+          ]
+        }
       },
-      "candidate": {
-        "status": "compatibility-certified",
-        "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
+      "immediate_platform_rollback": {
+        "status": "uncertified-known-contract-mismatch",
+        "consumer_commit": "8494c52d11bf2995c378398e977d82d06a09e046",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha6",
+          "git_commit": "9356268fb339269cd53763435af7ce88df1eeec7"
+        },
+        "opencode_rails": {
+          "version": "0.0.1.alpha6",
+          "git_commit": "8d1eb7701fe9e24baa64c16d6af03c6ed1f423eb"
+        },
+        "runtime": {
+          "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+          "application_image_id": "sha256:4291b256b37eeb694435093655db17154c837e53335b8d0eb8f1b07a744e856e",
+          "reported_version": "1.16.1"
+        },
+        "reason": "This retained application image is the platform's one-click target, but its alpha6 clients are not the certified alpha7 previous tuple."
+      },
+      "candidate": null,
+      "previous": {
+        "status": "certified",
+        "consumer_commit": "531011defe4acc45a15ffe44a8e9da9cb610aaac",
+        "consumer_tree": "d0e47b2d90ace87c6cc9c4b94b2f22987441c1f6",
         "opencode_ruby": {
           "version": "0.0.1.alpha7",
           "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
@@ -48,26 +317,44 @@
           }
         },
         "runtime": {
-          "tag_provenance": "ajent-opencode-blackline-canary:96552893",
-          "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
-          "source_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
-          "reported_version": "1.18.3",
-          "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
+          "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+          "reported_version": "1.16.1"
         },
         "application_canary": {
-          "checked_at": "2026-07-18T21:58:00Z",
-          "path": "Blackline::GenerateResponseJob",
-          "persisted_final_text": "compat-ok",
-          "model_request_count": 1,
+          "checked_at": "2026-07-20T06:22:36.958Z",
+          "final_text": "TRAVELWOLF_ALPHA7_CANARY_OK",
+          "application_prompt_count": 1,
+          "user_turn_count": 1,
+          "authoritative_assistant_turn_count": 1,
+          "child_turn_count": 0,
+          "model_request_count_observed": false,
+          "cleanup_status": "pass",
           "status": "pass"
         },
-        "certified_at": "2026-07-18T22:03:14Z"
+        "forge_ci": {
+          "status": "pass",
+          "pr_run_id": "2696",
+          "main_run_id": "2698"
+        },
+        "rollback_operability": {
+          "source_archived_on_all_remotes": true,
+          "prebuilt_application_image_retained": false,
+          "application_rebuild_required": true
+        },
+        "compatibility_certified_at": "2026-07-20T06:31:42Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T06:31:42Z",
+          "tuple_sha256": "sha256:20ecec3d2c3743efcd8575e71ec46dd7b86c2865e472511d16a96d57ddb8b40c",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-travelwolf-alpha7-rollback.json",
+              "sha256": "sha256:d5e36ffc40f44ff28cbd7eee7bf209fa595ce57619081a76f8d049499b5d30a4"
+            }
+          ]
+        }
       },
-      "previous": null
-    },
-    "travelwolf": {
-      "profile": "rails-persisted-turn",
-      "current": {
+      "emergency_provenance": {
         "status": "observed-production-contract-failed",
         "consumer_commit": "1ca756d64f058c9e0379f69fc4a3d53330cfcd15",
         "opencode_ruby": {
@@ -82,10 +369,110 @@
           "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
           "reported_version": "1.16.1"
         }
+      }
+    },
+    "mushu": {
+      "profile": "ruby-rest-sse",
+      "current": {
+        "status": "certified",
+        "consumer_commit": "3f6754caab3f66537a5834f44ee63c1f05ecb047",
+        "consumer_tree": "726c3878e71f7a4cf8c0b8a3fa8fc15382bbab45",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha8",
+          "git_commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+          "source_provenance": "unpublished-exact-commit"
+        },
+        "runtime": {
+          "tag_provenance": "docker-registry:5000/mushu-opencode:sha-521185613a864a16a76a21c7a60597ab3973bae9",
+          "registry_ref": "docker-registry:5000/mushu-opencode@sha256:a16bf0c4cd17698eba02244f6ba0e429b2238b6455e1415ff69fb08965c863a7",
+          "application_image": "docker-registry:5000/mushu@sha256:30f204184520d504c7c384c7f6e503fa3547217aaaef2f1d0d65884533bdeacd",
+          "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+          "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+          "build_source_commit": "521185613a864a16a76a21c7a60597ab3973bae9",
+          "reported_version": "0.0.0-permission-shortcuts-202606300721"
+        },
+        "preproduction_canary": {
+          "successful_turn_count": 13,
+          "turn_count": 13,
+          "successful_conversation_count": 6,
+          "conversation_count": 6,
+          "successful_mcp_context_count": 2,
+          "mcp_context_count": 2,
+          "database_sha256": "sha256:7fbe32ff9621196a2504aeba5eca78cb0c9c670edd7a1168b1f81f667872e2b6",
+          "log_sha256": "sha256:51b698fcc8b7bce68e79cbae10997e19eb47a88985cbe24871d10740dda26225",
+          "status": "pass"
+        },
+        "application_canary": {
+          "started_at": "2026-07-20T07:03:17Z",
+          "checked_at": "2026-07-20T07:04:51.376351Z",
+          "successful_turn_count": 13,
+          "turn_count": 13,
+          "successful_conversation_count": 6,
+          "conversation_count": 6,
+          "successful_mcp_context_count": 1,
+          "mcp_context_count": 1,
+          "status": "pass"
+        },
+        "forge_ci": {
+          "status": "pass",
+          "pr_run_id": "2700",
+          "main_run_id": "2705"
+        },
+        "production": {
+          "checked_at": "2026-07-20T07:13:20Z",
+          "web_health_status": 200,
+          "status_health_status": 200,
+          "runtime_readiness": "ready",
+          "containers": [
+            "web",
+            "calendar",
+            "telegram",
+            "opencode"
+          ],
+          "deployment_mode": "manual",
+          "status": "pass"
+        },
+        "rollback_operability": {
+          "certified_previous_consumer_commit": "af2e9b0ce7ccacf49500450595a67c765a9d617a",
+          "immediate_platform_rollback_is_certified_tuple": false,
+          "immediate_platform_rollback_commit": "82ca30b18e1f38b55e2bed91cbd46f1eaf4a5922"
+        },
+        "compatibility_certified_at": "2026-07-20T07:13:51Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T07:13:51Z",
+          "tuple_sha256": "sha256:804410a63cf2b6e4056d6dd9ce289ac72464f441c9785b6fc8dd50016263a1a8",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-mushu-alpha8-production.json",
+              "sha256": "sha256:786bf92a02588b951b5b7f7a21ed915b7ac1120538c5f894af027c190379170f"
+            }
+          ]
+        }
       },
-      "candidate": {
-        "status": "compatibility-certified",
-        "consumer_commit": "19747b59fa21e12560afd9edd73ed674ab3a644c",
+      "immediate_platform_rollback": {
+        "status": "uncertified-known-contract-failure",
+        "consumer_commit": "82ca30b18e1f38b55e2bed91cbd46f1eaf4a5922",
+        "opencode_ruby": {
+          "version": "0.0.1.alpha2",
+          "git_commit": "889d38332f98f5f7b76d16952b7204d8a5b9a662"
+        },
+        "opencode_rails": null,
+        "runtime": {
+          "registry_ref": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+          "application_image": null,
+          "application_image_provenance": "not-retained",
+          "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+          "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+          "reported_version": "0.0.0-permission-shortcuts-202606300721"
+        },
+        "reason": "The one-click application image is not retained and the alpha2 client failed the contract; use the certified alpha7 previous source tuple instead."
+      },
+      "candidate": null,
+      "previous": {
+        "status": "certified",
+        "consumer_commit": "af2e9b0ce7ccacf49500450595a67c765a9d617a",
+        "consumer_tree": "f43f48972ab444310508e9067831dfc6977f1a24",
         "opencode_ruby": {
           "version": "0.0.1.alpha7",
           "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
@@ -94,34 +481,56 @@
             "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
           }
         },
-        "opencode_rails": {
-          "version": "0.0.1.alpha7",
-          "git_commit": "2a391ccad1d098e4bb51eb19b6ca52adaa79e5cb",
-          "tag_provenance": {
-            "tag": "v0.0.1.alpha7",
-            "annotated_tag_object": "61e128084b2b665c0ba20b332987e41794948d7c"
-          }
-        },
         "runtime": {
-          "image": "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
-          "reported_version": "1.16.1"
+          "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
+          "registry_ref": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+          "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+          "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+          "build_source_commit": null,
+          "provenance_strength": "one-time-tag-source-attestation",
+          "reported_version": "0.0.0-permission-shortcuts-202606300721"
         },
         "application_canary": {
-          "run_id": "20260718215135-8d8102c0",
-          "checked_at": "2026-07-18T21:51:56.552Z",
-          "final_text": "TRAVELWOLF_ALPHA7_SUBSCRIBE_READY",
-          "application_prompt_count": 1,
-          "model_request_count_observed": false,
-          "cleanup_status": "pass",
+          "started_at": "2026-07-20T06:37:55Z",
+          "checked_at": "2026-07-20T06:39:46.921805Z",
+          "successful_turn_count": 13,
+          "turn_count": 13,
+          "successful_conversation_count": 6,
+          "conversation_count": 6,
+          "successful_mcp_context_count": 7,
+          "mcp_context_count": 7,
+          "database_sha256": "sha256:a567d2ff9a906c9b78831bb6fa43153af539f1e76ee63bf35961472f55651d74",
+          "log_sha256": "sha256:a35a83b003a1f082b8a721b3faad8b35cb71dc9d1ceaedfc3cec3b26916e85b9",
           "status": "pass"
         },
-        "certified_at": "2026-07-18T22:03:14Z"
+        "forge_ci": {
+          "status": "not_run",
+          "run_ids": [],
+          "reason": "Frozen exact head predates the runner-only system-test workflow repair; clean-worktree application canary is authoritative."
+        },
+        "source_availability": {
+          "origin_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719",
+          "backup_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719"
+        },
+        "rollback_operability": {
+          "source_archived_on_all_remotes": true,
+          "prebuilt_application_image_retained": false,
+          "application_rebuild_required": true
+        },
+        "compatibility_certified_at": "2026-07-20T06:39:46.921805Z",
+        "certification": {
+          "status": "pass",
+          "certified_at": "2026-07-20T06:39:46.921805Z",
+          "tuple_sha256": "sha256:8d7d3cb2d3e2d920c900a9c1ada365026872904588cff0b166903d1d6d32183f",
+          "evidence": [
+            {
+              "path": "evidence/2026-07-20-mushu-alpha7-rollback.json",
+              "sha256": "sha256:143deb6b400a05305991c956eaf80f07fdee76a9cce98af96f8eee395ed9847d"
+            }
+          ]
+        }
       },
-      "previous": null
-    },
-    "mushu": {
-      "profile": "ruby-rest-sse",
-      "current": {
+      "emergency_provenance": {
         "status": "observed-production-contract-failed",
         "consumer_commit": "fe16e5bab028e3c92cd5508ef2cebd9bfa23386f",
         "opencode_ruby": {
@@ -134,34 +543,7 @@
           "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
           "reported_version": "0.0.0-permission-shortcuts-202606300721"
         }
-      },
-      "candidate": {
-        "status": "compatibility-certified",
-        "consumer_commit": "f26d958b64f214a422aeb629860c8c9a46a4c084",
-        "opencode_ruby": {
-          "version": "0.0.1.alpha7",
-          "git_commit": "78b6f9c9e9c7d58b699af1c3c17764acd33de798",
-          "tag_provenance": {
-            "tag": "v0.0.1.alpha7",
-            "annotated_tag_object": "abfce3ec8cb1ee468107d0845521769502251645"
-          }
-        },
-        "runtime": {
-          "tag_provenance": "docker-registry:5000/mushu-opencode:sha-99d6328b1",
-          "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
-          "source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
-          "reported_version": "0.0.0-permission-shortcuts-202606300721"
-        },
-        "application_canary": {
-          "run_id": "mushu-alpha7-20260718T215300Z-f26d958",
-          "checked_at": "2026-07-18T21:53:00Z",
-          "persisted_final_text": "compat-ok",
-          "model_request_count": 1,
-          "status": "pass"
-        },
-        "certified_at": "2026-07-18T22:03:14Z"
-      },
-      "previous": null
+      }
     }
   }
 }

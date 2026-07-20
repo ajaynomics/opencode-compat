@@ -1,0 +1,87 @@
+{
+  "schema_version": 1,
+  "consumer": "mushu",
+  "profile": "ruby-rest-sse",
+  "consumer_commit": "3f6754caab3f66537a5834f44ee63c1f05ecb047",
+  "consumer_tree": "726c3878e71f7a4cf8c0b8a3fa8fc15382bbab45",
+  "status": "pass",
+  "certified_at": "2026-07-20T07:13:51Z",
+  "tuple_sha256": "sha256:804410a63cf2b6e4056d6dd9ce289ac72464f441c9785b6fc8dd50016263a1a8",
+  "clients": {
+    "publication_state": "unpublished",
+    "opencode_ruby": {
+      "version": "0.0.1.alpha8",
+      "commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766"
+    },
+    "opencode_rails": null
+  },
+  "runtime": {
+    "registry_ref": "docker-registry:5000/mushu-opencode@sha256:a16bf0c4cd17698eba02244f6ba0e429b2238b6455e1415ff69fb08965c863a7",
+    "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+    "custom_opencode_source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
+    "build_source_commit": "521185613a864a16a76a21c7a60597ab3973bae9",
+    "reported_version": "0.0.0-permission-shortcuts-202606300721"
+  },
+  "forge_ci": {
+    "pr": {
+      "run_id": "2700",
+      "job_ids": ["11903", "11904", "11905", "11906", "11907"],
+      "status": "pass",
+      "started_at": "2026-07-20T06:29:41Z",
+      "completed_at": "2026-07-20T06:41:14Z"
+    },
+    "main": {
+      "run_id": "2705",
+      "job_ids": ["11934", "11935", "11936", "11937", "11938"],
+      "status": "pass",
+      "started_at": "2026-07-20T06:43:03Z",
+      "completed_at": "2026-07-20T06:54:58Z"
+    }
+  },
+  "shared_contract": {
+    "review_input_path_at_capture": "/tmp/opencode-alpha8-mushu-permission-shortcuts.json",
+    "review_input_sha256": "sha256:6be88f0929815fa80839687e357473b232830aca4ccd1686f2a38ac9381088de",
+    "durable_ci_evidence": "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
+    "status": "pass"
+  },
+  "preproduction_canary": {
+    "successful_turn_count": 13,
+    "turn_count": 13,
+    "successful_conversation_count": 6,
+    "conversation_count": 6,
+    "successful_mcp_context_count": 2,
+    "mcp_context_count": 2,
+    "database_sha256": "sha256:7fbe32ff9621196a2504aeba5eca78cb0c9c670edd7a1168b1f81f667872e2b6",
+    "log_path_at_capture": "tmp/alpha8-canary-rails.log",
+    "log_sha256": "sha256:51b698fcc8b7bce68e79cbae10997e19eb47a88985cbe24871d10740dda26225",
+    "status": "pass"
+  },
+  "raw_artifact_retention": "raw clean-worktree database and log artifacts are ephemeral; durable counts, hashes, and sanitized results are retained in this committed evidence document",
+  "application_canary": {
+    "started_at": "2026-07-20T07:03:17Z",
+    "completed_at": "2026-07-20T07:04:51.376351Z",
+    "successful_turn_count": 13,
+    "turn_count": 13,
+    "successful_conversation_count": 6,
+    "conversation_count": 6,
+    "successful_mcp_context_count": 1,
+    "mcp_context_count": 1,
+    "status": "pass"
+  },
+  "production": {
+    "checked_at": "2026-07-20T07:13:20Z",
+    "application_tag_provenance": "docker-registry:5000/mushu:3f6754caab3f66537a5834f44ee63c1f05ecb047",
+    "application_image": "docker-registry:5000/mushu@sha256:30f204184520d504c7c384c7f6e503fa3547217aaaef2f1d0d65884533bdeacd",
+    "web_health_status": 200,
+    "status_health_status": 200,
+    "runtime_readiness": "ready",
+    "containers": ["web", "calendar", "telegram", "opencode"],
+    "deployment_mode": "manual",
+    "status": "pass"
+  },
+  "rollback_operability": {
+    "certified_previous_consumer_commit": "af2e9b0ce7ccacf49500450595a67c765a9d617a",
+    "immediate_platform_rollback_is_certified_tuple": false,
+    "immediate_platform_rollback_commit": "82ca30b18e1f38b55e2bed91cbd46f1eaf4a5922"
+  }
+}

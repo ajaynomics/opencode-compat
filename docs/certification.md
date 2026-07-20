@@ -85,6 +85,13 @@ must explicitly contain values matching the promotion:
 }
 ```
 
+The promotion command stores each accepted document as a hash-bound reference,
+`{"path":"evidence/...json","sha256":"sha256:..."}`. Later transitions
+re-read the bytes, verify that digest, and cross-check any detailed consumer
+tree, client, and runtime coordinates against the tuple. Editing an evidence
+document therefore invalidates the certification until it is reviewed and
+promoted again; a copied `tuple_sha256` alone is not sufficient.
+
 Preview the exact manifest transition with `--dry-run`, then repeat without it
 to write the manifest:
 
@@ -153,7 +160,8 @@ create and canary a distinct consumer rollback commit that preserves the same
 known-good client and exact runtime. Only after both immutable consumer commits
 have real passing evidence can the manifest honestly contain certified
 `current` and `previous` tuples. Until then, `promotion_readiness` remains
-blocked and the candidate PR must not be treated as a deploy authorization.
+non-certified (`bootstrap-current-only` or `candidate`) and the candidate PR
+must not be treated as deploy authorization.
 
 Use the explicit degraded-bootstrap transition for the first passing rollback
 tuple. It requires passing evidence bound to the complete candidate fingerprint
