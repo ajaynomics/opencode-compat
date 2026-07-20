@@ -300,6 +300,7 @@ jobs:
           echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
       - name: Exercise the complete manifest matrix without artifact claims
         env:
+          BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile
           OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
           OPENCODE_RUBY_COMMIT: ${{ steps.client-sha.outputs.value }}
           OPENCODE_RAILS_COMMIT: ${{ needs.prepare.outputs.rails_ref }}
@@ -312,4 +313,4 @@ jobs:
         run: scripts/run_image_matrix_contract.sh
       - name: State the Gitea evidence boundary
         if: always()
-        run: echo "Gitea executed every manifest image in one job, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
+        run: echo "Gitea's exact-image path uploads nothing; generated JSON is transient and is not review evidence. This job passes only after every manifest image passes."

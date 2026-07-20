@@ -287,6 +287,7 @@ class RepositoryTest < Minitest::Test
     assert_includes workflow, "exact-image-contract-gitea:"
     assert_includes workflow, "if: github.server_url != 'https://github.com'"
     assert_includes workflow, "run: scripts/run_image_matrix_contract.sh"
+    assert_operator workflow.scan('BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile').length, :>=, 2
     assert_operator workflow.scan("generated JSON is transient and is not review evidence").length, :>=, 3
 
     gitea_job = workflow.split(/^  exact-image-contract-gitea:\n/, 2).fetch(1)
