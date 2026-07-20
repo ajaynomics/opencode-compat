@@ -108,6 +108,23 @@ class ImageContractEvidenceTest < Minitest::Test
     assert_failed_without_docker(evidence_path)
   end
 
+  def test_rejects_malformed_ipv6_and_public_probe_hosts_before_docker
+    checkout, commit = git_checkout
+
+    ["not-an-address", "::1", "8.8.8.8"].each_with_index do |probe_host, index|
+      evidence_path = File.join(@tmp, "probe-host-#{index}.json")
+      environment = base_environment(checkout, commit, evidence_path).merge(
+        "OPENCODE_PROBE_HOST" => probe_host
+      )
+
+      _output, error, status = run_contract(environment)
+
+      assert_equal 2, status.exitstatus
+      assert_match(/loopback or private IPv4 address/, error)
+      assert_failed_without_docker(evidence_path)
+    end
+  end
+
   private
 
   def base_environment(checkout, commit, evidence_path)

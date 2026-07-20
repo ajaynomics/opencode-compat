@@ -6,6 +6,7 @@ image="${OPENCODE_IMAGE:-}"
 gem_path="${OPENCODE_RUBY_PATH:-}"
 expected_gem_commit="${OPENCODE_RUBY_COMMIT:-}"
 evidence_path="${OPENCODE_COMPAT_EVIDENCE_PATH:-}"
+probe_host="${OPENCODE_PROBE_HOST:-127.0.0.1}"
 container_name="opencode-compat-${RANDOM}-$$"
 llm_container_name="opencode-compat-llm-${RANDOM}-$$"
 network_name="opencode-compat-net-${RANDOM}-$$"
@@ -97,6 +98,18 @@ if [[ ! "$image" =~ ^[^[:space:]@]+@sha256:[0-9a-f]{64}$ ]]; then
     exit 2
   fi
 fi
+if ! ruby -ripaddr -e '
+  begin
+    address = IPAddr.new(ARGV.fetch(0))
+    valid = address.ipv4? && (address.loopback? || address.private?)
+  rescue IPAddr::InvalidAddressError
+    valid = false
+  end
+  exit(valid ? 0 : 1)
+' "$probe_host"; then
+  echo "OPENCODE_PROBE_HOST must be a loopback or private IPv4 address" >&2
+  exit 2
+fi
 
 if [[ ! "$expected_gem_commit" =~ ^[0-9a-f]{40}$ ]]; then
   echo "OPENCODE_RUBY_COMMIT must be a full lowercase 40-character Git commit" >&2
@@ -171,7 +184,7 @@ config_json="$(jq -cn --arg url "http://compat-llm:8080/v1" '{
 docker run --detach \
   --name "$container_name" \
   --network "$network_name" \
-  --publish 127.0.0.1::4096 \
+  --publish "${probe_host}::4096" \
   --env "OPENCODE_CONFIG_CONTENT=$config_json" \
   --env OPENCODE_DISABLE_AUTOUPDATE=1 \
   --env OPENCODE_DISABLE_AUTOCOMPACT=1 \
@@ -183,7 +196,7 @@ docker run --detach \
 opencode_container_started=1
 
 host_port="$(docker port "$container_name" 4096/tcp | sed -E 's/.*:([0-9]+)$/\1/' | head -1)"
-base_url="http://127.0.0.1:${host_port}"
+base_url="http://${probe_host}:${host_port}"
 
 ready=0
 for _ in $(seq 1 120); do

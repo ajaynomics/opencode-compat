@@ -287,6 +287,9 @@ class RepositoryTest < Minitest::Test
     assert_includes workflow, "exact-image-contract-gitea:"
     assert_includes workflow, "if: github.server_url != 'https://github.com'"
     assert_includes workflow, "run: scripts/run_image_matrix_contract.sh"
+    assert_includes workflow, "ip -4 route show default"
+    assert_includes workflow, "address.ipv4? && address.private?"
+    assert_includes workflow, 'echo "OPENCODE_PROBE_HOST=$probe_host" >> "$GITHUB_ENV"'
     assert_operator workflow.scan('BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile').length, :>=, 2
     assert_operator workflow.scan("generated JSON is transient and is not review evidence").length, :>=, 3
 
@@ -327,6 +330,9 @@ class RepositoryTest < Minitest::Test
     assert_includes runner, "exact_live_contract.rb"
     assert_includes runner, 'docker cp "$repo_root/scripts/fake_llm.py"'
     refute_includes runner, '--volume "$repo_root/scripts:/compat:ro"'
+    assert_includes runner, '--publish "${probe_host}::4096"'
+    assert_includes runner, 'base_url="http://${probe_host}:${host_port}"'
+    refute_includes runner, "--publish 0.0.0.0"
     assert_includes runner, "OPENCODE_COMPAT_EVIDENCE_PATH"
     assert_includes runner, "OPENCODE_EXPECTED_VERSION"
     refute_match(/request_count.*-lt\s+1/, runner)
