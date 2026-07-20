@@ -126,12 +126,16 @@ still does not certify a consumer's ActiveRecord schema, persistence callbacks,
 container adapter, or application canary; those remain consumer-owned profile
 evidence.
 
-CI writes canonical JSON artifacts for the shared fixture, lockstep client, and
-each exact-image target. Artifact retention is 30 days and supplies reviewable
-workflow provenance; it is not the long-term ledger. After review, copy the
-relevant facts into a repository evidence document bound to the complete tuple
-fingerprint. Automated workflows never update certified evidence or promote a
-tuple.
+GitHub CI writes canonical JSON artifacts for the shared fixture, lockstep
+client, and each exact-image target. Artifact retention is 30 days and supplies
+reviewable workflow provenance; it is not the long-term ledger. Gitea executes
+the same contracts, with its exact-image targets run sequentially from the full
+generated manifest, but its installed artifact service cannot accept the
+reviewed GitHub upload action. Gitea therefore keeps generated JSON transient
+and makes no artifact-evidence claim. After reviewing a GitHub artifact, copy
+the relevant facts into a repository evidence document bound to the complete
+tuple fingerprint. Automated workflows never update certified evidence or
+promote a tuple.
 
 The command clears `candidate` after promotion. It sets the repository-wide
 `migration_state` to `certified` only after every consumer has certified

@@ -82,11 +82,16 @@ expected text byte-for-byte and the deterministic model stub to observe exactly
 one request and exactly one authoritative assistant message. It never calls an
 external model provider.
 
-Candidate CI uploads machine-readable fixture, lockstep-client, and exact-image
-evidence for 30 days. These artifacts are review inputs, not certification by
-themselves. A person must review a passing artifact and commit the durable
-certification document under `evidence/`; no workflow commits or promotes its
-own result.
+On GitHub, candidate CI uploads machine-readable fixture, lockstep-client, and
+exact-image evidence for 30 days. These artifacts are review inputs, not
+certification by themselves. Gitea runs the same repository, fixture, and
+lockstep contracts and executes every exact-image manifest entry sequentially,
+because its runner cannot expand a matrix from a dependency job's JSON output.
+The installed Gitea artifact service does not support the pinned GitHub upload
+action, so Gitea deliberately uploads nothing: its generated JSON is transient
+and must not be described as review evidence. A person must review a passing
+GitHub artifact and commit the durable certification document under `evidence/`;
+no workflow commits or promotes its own result.
 
 `manifests/image-matrix.json` binds the active pending matrix to both candidate
 commits. Its `previous_certification` entries preserve the last alpha7 result;

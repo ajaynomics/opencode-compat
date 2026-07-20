@@ -66,8 +66,18 @@ jobs:
       - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
-          bundler-cache: true
+          bundler-cache: ${{ github.server_url == 'https://github.com' }}
           working-directory: ruby-client
+      - name: Install candidate dependencies without the unavailable Gitea cache service
+        if: github.server_url != 'https://github.com'
+        working-directory: ruby-client
+        env:
+          BUNDLE_APP_CONFIG: ${{ runner.temp }}/opencode-ruby-fixture-bundle-config
+          BUNDLE_PATH: ${{ runner.temp }}/opencode-ruby-fixture-bundle
+        run: |
+          echo "BUNDLE_APP_CONFIG=$BUNDLE_APP_CONFIG" >> "$GITHUB_ENV"
+          echo "BUNDLE_PATH=$BUNDLE_PATH" >> "$GITHUB_ENV"
+          bundle install --jobs 4 --retry 3
       - id: client-sha
         name: Verify immutable Ruby candidate checkout
         env:
@@ -94,7 +104,7 @@ jobs:
           mkdir -p ../.compat-evidence
           bundle exec ruby ../ruby/opencode_ruby_fixture_contract.rb
       - name: Upload fixture evidence
-        if: always()
+        if: always() && github.server_url == 'https://github.com'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: ruby-fixtures-${{ github.run_id }}-${{ github.run_attempt }}
@@ -102,6 +112,9 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
+      - name: State the Gitea evidence boundary
+        if: always() && github.server_url != 'https://github.com'
+        run: echo "Gitea executed the fixture contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
 
   lockstep-client-contract:
     needs: prepare
@@ -130,8 +143,18 @@ jobs:
       - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: ${{ matrix.ruby }}
-          bundler-cache: true
+          bundler-cache: ${{ github.server_url == 'https://github.com' }}
           working-directory: opencode-rails
+      - name: Install candidate dependencies without the unavailable Gitea cache service
+        if: github.server_url != 'https://github.com'
+        working-directory: opencode-rails
+        env:
+          BUNDLE_APP_CONFIG: ${{ runner.temp }}/opencode-rails-${{ matrix.ruby }}-bundle-config
+          BUNDLE_PATH: ${{ runner.temp }}/opencode-rails-${{ matrix.ruby }}-bundle
+        run: |
+          echo "BUNDLE_APP_CONFIG=$BUNDLE_APP_CONFIG" >> "$GITHUB_ENV"
+          echo "BUNDLE_PATH=$BUNDLE_PATH" >> "$GITHUB_ENV"
+          bundle install --jobs 4 --retry 3
       - name: Verify immutable candidate checkouts
         env:
           EXPECTED_RUBY_SHA: ${{ needs.prepare.outputs.ruby_ref }}
@@ -168,7 +191,7 @@ jobs:
           mkdir -p ../.compat-evidence
           bundle exec ruby ../ruby/lockstep_client_contract.rb
       - name: Upload lockstep evidence
-        if: always()
+        if: always() && github.server_url == 'https://github.com'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: lockstep-ruby-${{ matrix.ruby }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -176,8 +199,12 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
+      - name: State the Gitea evidence boundary
+        if: always() && github.server_url != 'https://github.com'
+        run: echo "Gitea executed the lockstep client contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
 
   exact-image-contract:
+    if: github.server_url == 'https://github.com'
     needs: prepare
     runs-on: ubuntu-latest
     strategy:
@@ -230,7 +257,7 @@ jobs:
           mkdir -p .compat-evidence
           bundle exec scripts/run_image_contract.sh
       - name: Upload exact-image evidence
-        if: always()
+        if: always() && github.server_url == 'https://github.com'
         uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a # v7.0.1
         with:
           name: image-${{ matrix.id }}-${{ github.run_id }}-${{ github.run_attempt }}
@@ -238,3 +265,51 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
+
+  exact-image-contract-gitea:
+    if: github.server_url != 'https://github.com'
+    needs: prepare
+    runs-on: ubuntu-latest
+    name: Gitea full exact image matrix
+    steps:
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+      - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
+        with:
+          repository: ajaynomics/opencode-ruby
+          ref: ${{ needs.prepare.outputs.ruby_ref }}
+          path: ruby-client
+      - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
+        with:
+          ruby-version: "3.4"
+      - name: Install candidate dependencies outside the checkout
+        working-directory: ruby-client
+        env:
+          BUNDLE_APP_CONFIG: ${{ runner.temp }}/opencode-ruby-bundle-config
+          BUNDLE_PATH: ${{ runner.temp }}/opencode-ruby-bundle
+        run: |
+          echo "BUNDLE_APP_CONFIG=$BUNDLE_APP_CONFIG" >> "$GITHUB_ENV"
+          echo "BUNDLE_PATH=$BUNDLE_PATH" >> "$GITHUB_ENV"
+          bundle install --jobs 4 --retry 3
+      - id: client-sha
+        name: Verify immutable Ruby candidate checkout
+        env:
+          EXPECTED_CLIENT_SHA: ${{ needs.prepare.outputs.ruby_ref }}
+        run: |
+          actual_client_sha="$(git -C ruby-client rev-parse HEAD)"
+          test "$actual_client_sha" = "$EXPECTED_CLIENT_SHA"
+          echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
+      - name: Exercise the complete manifest matrix without artifact claims
+        env:
+          OPENCODE_RUBY_PATH: ${{ github.workspace }}/ruby-client
+          OPENCODE_RUBY_COMMIT: ${{ steps.client-sha.outputs.value }}
+          OPENCODE_RAILS_COMMIT: ${{ needs.prepare.outputs.rails_ref }}
+          OPENCODE_COMPAT_EVIDENCE_DIR: ${{ github.workspace }}/.compat-evidence
+          OPENCODE_COMPAT_RUN_ID: ${{ github.run_id }}
+          OPENCODE_COMPAT_RUN_ATTEMPT: ${{ github.run_attempt }}
+          OPENCODE_COMPAT_HEAD_SHA: ${{ github.sha }}
+          OPENCODE_COMPAT_REPOSITORY: ${{ github.repository }}
+          OPENCODE_COMPAT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+        run: scripts/run_image_matrix_contract.sh
+      - name: State the Gitea evidence boundary
+        if: always()
+        run: echo "Gitea executed every manifest image in one job, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."

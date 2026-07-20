@@ -275,6 +275,35 @@ class RepositoryTest < Minitest::Test
     refute_match(/\b(kamal|kubectl|helm|nomad|docker\s+service|gh\s+pr\s+merge)\b/i, workflow)
   end
 
+  def test_candidate_workflow_has_an_explicit_dual_forge_evidence_boundary
+    workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
+    upload_conditions = workflow.scan(
+      /- name: Upload (?:fixture|lockstep|exact-image) evidence\n\s+if: ([^\n]+)\n\s+uses: actions\/upload-artifact@/
+    ).flatten
+
+    assert_equal 3, upload_conditions.length
+    assert_equal ["always() && github.server_url == 'https://github.com'"], upload_conditions.uniq
+    assert_includes workflow, "bundler-cache: ${{ github.server_url == 'https://github.com' }}"
+    assert_includes workflow, "exact-image-contract-gitea:"
+    assert_includes workflow, "if: github.server_url != 'https://github.com'"
+    assert_includes workflow, "run: scripts/run_image_matrix_contract.sh"
+    assert_operator workflow.scan("generated JSON is transient and is not review evidence").length, :>=, 3
+
+    gitea_job = workflow.split(/^  exact-image-contract-gitea:\n/, 2).fetch(1)
+    refute_includes gitea_job, "actions/upload-artifact@"
+  end
+
+  def test_gitea_matrix_runner_uses_every_generated_entry_without_hardcoded_coordinates
+    runner = File.read(File.join(ROOT, "scripts/run_image_matrix_contract.sh"))
+
+    assert_includes runner, 'matrix_json="$(ruby "$repo_root/scripts/matrix_json.rb")"'
+    assert_includes runner, 'for ((index = 0; index < entry_count; index++))'
+    assert_includes runner, 'bundle exec "$repo_root/scripts/run_image_contract.sh"'
+    assert_includes runner, '.image.reported_version == $version'
+    refute_match(/upstream-[0-9]/, runner)
+    refute_match(/ghcr\.io\/anomalyco/, runner)
+  end
+
   def test_tuple_promotion_has_no_command_execution_or_deployment_client
     paths = %w[
       lib/opencode_compat/runtime_tuple_promoter.rb
