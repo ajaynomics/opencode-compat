@@ -1,6 +1,6 @@
 {
   "schema_version": 1,
-  "consumer": "ajent-rails",
+  "consumer": "app-c",
   "profile": "rails-persisted-turn",
   "consumer_commit": "96552893baccd5ccba1592b2585edfef1299b4f9",
   "status": "pass",

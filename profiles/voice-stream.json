@@ -1,6 +1,6 @@
 {
   "id": "voice-stream",
-  "owner": "greenroom",
+  "owner": "app-e",
   "extends": ["ruby-rest-sse"],
   "required_behaviors": [
     "legacy-and-current-terminal-events",

@@ -49,21 +49,85 @@ class RepositoryTest < Minitest::Test
       assert_equal ["ruby-rest-sse"], target.fetch("profiles")
       assert_equal "shared-client-contract-only",
         target.fetch("certification_scope", "shared-client-contract-only")
-      assert_equal "certified", target.fetch("certification_status")
+      assert_includes %w[certified pending], target.fetch("certification_status")
+    end
+
+    certified_rows = targets.select { |target| target.fetch("certification_status") == "certified" }
+    assert_equal(
+      %w[
+        upstream-1.16.1
+        upstream-1.17.18
+        upstream-1.18.18-f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f
+        upstream-1.18.3
+      ],
+      certified_rows.map { |target| target.fetch("id") }.sort
+    )
+    certified = certified_rows.to_h { |target| [target.fetch("id"), target] }
+
+    app_a = certified.fetch("upstream-1.16.1")
+    assert_equal "ghcr.io/anomalyco/opencode@sha256:e975a0647576016dfdf77d54b979ca30d32b4750472c10263e9894aad6628c2a",
+      app_a.fetch("image")
+    assert_equal ["app-a"], app_a.fetch("consumers")
+    assert_equal ["rails-persisted-turn"], app_a.fetch("required_consumer_profiles")
+    assert_equal "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      app_a.dig("current_certification", "client_commit")
+    assert_equal "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
+      app_a.dig("current_certification", "evidence")
+
+    app_d_plugin = certified.fetch("upstream-1.17.18")
+    assert_equal "ghcr.io/anomalyco/opencode@sha256:bf9d0e84b7cedef436a8f57db4d48767cd5d8fc6604f666335c1cc916b199a97",
+      app_d_plugin.fetch("image")
+    assert_equal ["app-d"], app_d_plugin.fetch("consumers")
+    assert_equal ["plugin-ledger"], app_d_plugin.fetch("required_consumer_profiles")
+    assert_equal "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      app_d_plugin.dig("current_certification", "client_commit")
+    assert_equal "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
+      app_d_plugin.dig("current_certification", "evidence")
+
+    app_c = certified.fetch("upstream-1.18.3")
+    assert_equal "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e",
+      app_c.fetch("image")
+    assert_equal ["app-c"], app_c.fetch("consumers")
+    assert_equal ["rails-persisted-turn", "plugin-ledger"],
+      app_c.fetch("required_consumer_profiles")
+    assert_equal "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      app_c.dig("current_certification", "client_commit")
+    assert_equal "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
+      app_c.dig("current_certification", "evidence")
+
+    newest = certified.fetch(
+      "upstream-1.18.18-f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f"
+    )
+    assert_equal "ghcr.io/anomalyco/opencode@sha256:f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f",
+      newest.fetch("image")
+    assert_empty newest.fetch("consumers")
+    assert_empty newest.fetch("required_consumer_profiles")
+    assert_equal "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      newest.dig("current_certification", "client_commit")
+    assert_equal "evidence/2026-08-18-opencode-1.18.18-shared-client.json",
+      newest.dig("current_certification", "evidence")
+    assert_equal "2026-08-18T21:31:08Z", newest.dig("current_certification", "checked_at")
+    assert_equal "<run-id>", newest.dig("current_certification", "workflow_run_id")
+
+    certified.each_value do |target|
       current = target.fetch("current_certification")
       assert_equal "certified", current.fetch("status")
-      assert_match(/\A[0-9a-f]{40}\z/, current.fetch("client_commit"))
-      assert_match(/\A[0-9a-f]{40}\z/, current.fetch("rails_commit"))
+      assert_equal "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f", current.fetch("rails_commit")
       assert_equal current.fetch("expected_text"), current.fetch("full_text")
       assert_equal 1, current.fetch("llm_request_count")
       assert_path_exists File.join(ROOT, current.fetch("evidence"))
-      previous = target["previous_certification"]
-      next unless previous
+    end
 
-      assert_equal "certified", previous.fetch("status")
-      assert_match(/\A[0-9a-f]{40}\z/, previous.fetch("client_commit"))
-      assert_equal previous.fetch("expected_text"), previous.fetch("full_text")
-      assert_equal 1, previous.fetch("llm_request_count")
+    pending = targets.select { |target| target.fetch("certification_status") == "pending" }
+    assert_operator pending.length, :<=, 1
+    upstream_image = json("manifests/upstream.json").fetch("image")
+    assert_equal 1, targets.count { |target| target.fetch("image") == upstream_image }
+    pending.each do |target|
+      assert_equal upstream_image, target.fetch("image")
+      refute target.key?("current_certification")
+      refute target.key?("previous_certification")
+      assert_empty target.fetch("consumers")
+      assert_empty target.fetch("required_consumer_profiles")
     end
   end
 
@@ -152,8 +216,8 @@ class RepositoryTest < Minitest::Test
     assert_equal "unpublished", evidence.fetch("publication_state")
     assert_equal candidate.dig("opencode-ruby", "ref"), evidence.dig("clients", "opencode_ruby", "commit")
     assert_equal candidate.dig("opencode-rails", "ref"), evidence.dig("clients", "opencode_rails", "commit")
-    assert_equal "29725021192", evidence.dig("github_workflow", "run_id")
-    assert_equal "2717", evidence.dig("gitea_workflow", "run_id")
+    assert_equal "<run-id>", evidence.dig("github_workflow", "run_id")
+    assert_equal "<run-id>", evidence.dig("gitea_workflow", "run_id")
     assert_equal false, evidence.dig("gitea_workflow", "artifact_evidence_claimed")
     assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("github_workflow", "completed_at")
     assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("gitea_workflow", "completed_at")
@@ -168,6 +232,38 @@ class RepositoryTest < Minitest::Test
       assert_equal 1, contract.fetch("llm_request_count")
     end
     assert evidence.fetch("limitations").any? { |entry| entry.include?("application profile") }
+  end
+
+  def test_v1_18_18_evidence_certifies_shared_client_only
+    evidence = json("evidence/2026-08-18-opencode-1.18.18-shared-client.json")
+    candidate = json("manifests/client-candidate.json").fetch("clients")
+    contract = evidence.fetch("exact_image_contracts").fetch(0)
+    target = json("manifests/image-matrix.json").fetch("public_ci")
+      .find { |row| row.fetch("version") == "1.18.18" }
+
+    assert_equal "pass", evidence.fetch("status")
+    assert_equal "shared-client-image-certification", evidence.fetch("kind")
+    assert_equal "shared-client-contract-only", evidence.fetch("certification_scope")
+    assert_equal "unpublished", evidence.fetch("publication_state")
+    refute evidence.key?("github_workflow")
+    assert_equal "<run-id>", evidence.dig("gitea_workflow", "run_id")
+    assert_equal false, evidence.dig("gitea_workflow", "artifact_evidence_claimed")
+    assert_equal candidate.dig("opencode-ruby", "ref"), evidence.dig("clients", "opencode_ruby", "commit")
+    assert_equal candidate.dig("opencode-rails", "ref"), evidence.dig("clients", "opencode_rails", "commit")
+    assert_equal true, evidence.dig("clients", "opencode_ruby", "executed")
+    assert_equal false, evidence.dig("clients", "opencode_rails", "executed_by_image_contract")
+    assert_equal 1, evidence.fetch("exact_image_contracts").length
+    assert_equal target.fetch("id"), contract.fetch("id")
+    assert_equal target.fetch("image"), contract.fetch("image")
+    assert_equal target.dig("current_certification", "checked_at"), contract.fetch("checked_at")
+    assert_equal "2026-08-18T21:31:08Z", contract.fetch("checked_at")
+    assert_equal "compat-ok", contract.fetch("full_text")
+    assert_equal contract.fetch("expected_text"), contract.fetch("full_text")
+    assert_equal 1, contract.fetch("llm_request_count")
+    assert_equal 1, contract.fetch("authoritative_assistant_message_count")
+    assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("gitea_workflow", "completed_at")
+    assert_operator evidence.fetch("certified_at"), :>=, evidence.dig("reviewed_local_contract", "checked_at")
+    assert evidence.fetch("limitations").any? { |entry| entry.include?("does not promote") }
   end
 
   def test_certified_migration_keeps_previous_tuple
@@ -238,7 +334,7 @@ class RepositoryTest < Minitest::Test
   def test_platform_one_click_targets_are_explicitly_uncertified_and_separate
     consumers = json("manifests/runtime-tuples.json").fetch("consumers")
 
-    %w[travelwolf mushu].each do |name|
+    %w[app-a app-b].each do |name|
       rollback = consumers.fetch(name).fetch("immediate_platform_rollback")
       assert_match(/\Auncertified-/, rollback.fetch("status"))
       assert_match(/\A[0-9a-f]{40}\z/, rollback.fetch("consumer_commit"))
@@ -247,14 +343,14 @@ class RepositoryTest < Minitest::Test
       refute_equal consumers.dig(name, "previous", "consumer_commit"), rollback.fetch("consumer_commit")
     end
 
-    travelwolf_runtime = consumers.dig("travelwolf", "immediate_platform_rollback", "runtime")
-    assert_match(/@sha256:[0-9a-f]{64}\z/, travelwolf_runtime.fetch("image"))
-    assert_match(/\Asha256:[0-9a-f]{64}\z/, travelwolf_runtime.fetch("application_image_id"))
+    app_a_runtime = consumers.dig("app-a", "immediate_platform_rollback", "runtime")
+    assert_match(/@sha256:[0-9a-f]{64}\z/, app_a_runtime.fetch("image"))
+    assert_match(/\Asha256:[0-9a-f]{64}\z/, app_a_runtime.fetch("application_image_id"))
 
-    mushu_runtime = consumers.dig("mushu", "immediate_platform_rollback", "runtime")
-    assert_match(/@sha256:[0-9a-f]{64}\z/, mushu_runtime.fetch("registry_ref"))
-    assert_nil mushu_runtime.fetch("application_image")
-    assert_equal "not-retained", mushu_runtime.fetch("application_image_provenance")
+    app_b_runtime = consumers.dig("app-b", "immediate_platform_rollback", "runtime")
+    assert_match(/@sha256:[0-9a-f]{64}\z/, app_b_runtime.fetch("registry_ref"))
+    assert_nil app_b_runtime.fetch("application_image")
+    assert_equal "not-retained", app_b_runtime.fetch("application_image_provenance")
   end
 
   def test_certified_tuple_evidence_is_bound_to_complete_tuple_fingerprints
@@ -335,6 +431,13 @@ class RepositoryTest < Minitest::Test
     end
   end
 
+  def test_repository_job_installs_its_pinned_standalone_test_dependency
+    workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
+    repository_job = workflow.split(/^  repository:\n/, 2).fetch(1).split(/^  prepare:\n/, 2).fetch(0)
+
+    assert_includes repository_job, "gem install minitest --version 6.0.6 --no-document"
+  end
+
   def test_candidate_workflow_verifies_and_preserves_the_lockstep_client_tuple
     workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
 
@@ -374,13 +477,26 @@ class RepositoryTest < Minitest::Test
     assert_includes workflow, "exact-image-contract-gitea:"
     assert_includes workflow, "if: github.server_url != 'https://github.com'"
     assert_includes workflow, "run: scripts/run_image_matrix_contract.sh"
-    assert_includes workflow, 'probe_host="$(ruby scripts/private_default_gateway.rb)"'
-    assert_includes workflow, 'echo "OPENCODE_PROBE_HOST=$probe_host" >> "$GITHUB_ENV"'
+    assert_includes workflow, 'echo "OPENCODE_PROBE_HOST=127.0.0.1" >> "$GITHUB_ENV"'
     assert_operator workflow.scan('BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile').length, :>=, 2
     assert_operator workflow.scan("generated JSON is transient and is not review evidence").length, :>=, 3
 
     gitea_job = workflow.split(/^  exact-image-contract-gitea:\n/, 2).fetch(1)
     refute_includes gitea_job, "actions/upload-artifact@"
+  end
+
+  def test_gitea_exact_image_contract_uses_the_trusted_builder_only_for_main_pushes_or_manual_dispatches
+    workflow = File.read(File.join(ROOT, ".github/workflows/candidate.yml"))
+    ordinary_jobs = workflow.split(/^  exact-image-contract:\n/, 2).fetch(0)
+    github_job, gitea_job = workflow.split(/^  exact-image-contract:\n/, 2).fetch(1)
+      .split(/^  exact-image-contract-gitea:\n/, 2)
+
+    assert_equal 4, ordinary_jobs.scan("runs-on: ubuntu-latest").length
+    assert_includes github_job, "runs-on: ubuntu-latest"
+    assert_includes gitea_job, "runs-on: private-image-build"
+    assert_includes gitea_job, "github.server_url != 'https://github.com'"
+    assert_includes gitea_job, "github.event_name == 'workflow_dispatch'"
+    assert_includes gitea_job, "github.event_name == 'push' && github.ref == 'refs/heads/main'"
   end
 
   def test_gitea_matrix_runner_uses_every_generated_entry_without_hardcoded_coordinates

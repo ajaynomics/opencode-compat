@@ -64,7 +64,7 @@
       "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"]
     },
     {
-      "id": "ajent-blackline-alpha8-shared-contract",
+      "id": "app-c-product-2-alpha8-shared-contract",
       "checked_at": "2026-07-20T05:39:57Z",
       "image": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
       "docker_image_id": "sha256:239e3dc6cd2958251cda636fb20bd7cd7c46f596bd4c61cb81863ebc49d824e8",
@@ -79,7 +79,7 @@
       "required_consumer_profiles": ["rails-persisted-turn", "plugin-ledger"]
     },
     {
-      "id": "mushu-permission-shortcuts-alpha8-shared-contract",
+      "id": "app-b-permission-shortcuts-alpha8-shared-contract",
       "checked_at": "2026-07-20T05:40:08Z",
       "image": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
       "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",

@@ -13,7 +13,7 @@ The gate requires:
    candidate tests on Ruby 3.2 through 4.0, an exact Rails-to-Ruby runtime
    dependency, and loaded Bundler provenance for the Ruby commit;
 3. the public exact-image matrix against the deterministic model stub;
-4. an isolated custom-image canary for Ajent Rails and Mushu;
+4. an isolated custom-image canary for App C and App B;
 5. the consumer's own focused and full required tests in its devcontainer;
 6. a user-visible canary turn for stream consumers;
 7. captured evidence including image ID/digest, server version, source commit,
@@ -66,7 +66,7 @@ First inspect the fingerprints for both the candidate and rollback tuple:
 
 ```sh
 ruby scripts/promote_runtime_tuple.rb fingerprint \
-  --consumer travelwolf \
+  --consumer app-a \
   --consumer-commit FULL_40_CHARACTER_CONSUMER_COMMIT
 ```
 
@@ -76,7 +76,7 @@ must explicitly contain values matching the promotion:
 ```json
 {
   "schema_version": 1,
-  "consumer": "travelwolf",
+  "consumer": "app-a",
   "profile": "rails-persisted-turn",
   "consumer_commit": "FULL_40_CHARACTER_CONSUMER_COMMIT",
   "status": "pass",
@@ -97,14 +97,14 @@ to write the manifest:
 
 ```sh
 ruby scripts/promote_runtime_tuple.rb promote \
-  --consumer travelwolf \
+  --consumer app-a \
   --consumer-commit FULL_40_CHARACTER_CONSUMER_COMMIT \
   --status pass \
   --certified-at 2026-07-18T12:00:00Z \
-  --evidence evidence/travelwolf-candidate.json \
+  --evidence evidence/app-a-candidate.json \
   --previous-status pass \
   --previous-certified-at 2026-07-17T12:00:00Z \
-  --previous-evidence evidence/travelwolf-rollback.json \
+  --previous-evidence evidence/app-a-rollback.json \
   --dry-run
 ```
 
@@ -135,14 +135,14 @@ evidence.
 
 GitHub CI writes canonical JSON artifacts for the shared fixture, lockstep
 client, and each exact-image target. Artifact retention is 30 days and supplies
-reviewable workflow provenance; it is not the long-term ledger. Gitea executes
-the same contracts, with its exact-image targets run sequentially from the full
-generated manifest, but its installed artifact service cannot accept the
-reviewed GitHub upload action. Gitea therefore keeps generated JSON transient
-and makes no artifact-evidence claim. After reviewing a GitHub artifact, copy
-the relevant facts into a repository evidence document bound to the complete
-tuple fingerprint. Automated workflows never update certified evidence or
-promote a tuple.
+reviewable workflow provenance; it is not the long-term ledger. The private
+forge executes the same contracts, with its exact-image targets run
+sequentially from the full generated manifest, but its installed artifact
+service cannot accept the reviewed GitHub upload action. The private forge
+therefore keeps generated JSON transient and makes no artifact-evidence claim.
+After reviewing a GitHub artifact, copy the relevant facts into a repository
+evidence document bound to the complete tuple fingerprint. Automated workflows
+never update certified evidence or promote a tuple.
 
 The command clears `candidate` after promotion. It sets the repository-wide
 `migration_state` to `certified` only after every consumer has certified
@@ -171,11 +171,11 @@ and a literal acknowledgement; it preserves the failed baseline as uncertified
 
 ```sh
 ruby scripts/promote_runtime_tuple.rb bootstrap-current \
-  --consumer travelwolf \
+  --consumer app-a \
   --consumer-commit FULL_40_CHARACTER_ROLLBACK_COMMIT \
   --status pass \
   --certified-at 2026-07-20T12:00:00Z \
-  --evidence evidence/travelwolf-rollback.json \
+  --evidence evidence/app-a-rollback.json \
   --acknowledge-degraded-rollback \
     accept-degraded-rollback-with-failed-emergency-provenance \
   --dry-run

@@ -1,6 +1,6 @@
 {
   "id": "plugin-ledger",
-  "owner": "opencode-ajent",
+  "owner": "app-d",
   "required_behaviors": [
     "exact-upstream-image",
     "exact-plugin-version",

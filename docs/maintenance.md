@@ -11,14 +11,14 @@ The adjacent projects intentionally do not all use the same gems:
 
 | Consumer | OpenCode boundary | Owned dependency |
 | --- | --- | --- |
-| Ajent Rails | Ruby REST/SSE plus persisted Rails turns | `opencode-ruby` and `opencode-rails` |
-| Travelwolf | Ruby REST/SSE plus persisted Rails turns and Sprite lifecycle | `opencode-ruby` and `opencode-rails` |
-| Mushu | Ruby REST/SSE with application-owned conversation, claim, recovery, Telegram scope, and idempotency | `opencode-ruby` only |
-| Greenroom | Direct voice-stream worker | No Ruby adapter gem |
-| Leela | Custom strict-v2 server, security, and toolchain lane | No Ruby adapter gem |
-| opencode-ajent | Native CLI and plugin hook/event lane | No Ruby adapter gem |
+| App C | Ruby REST/SSE plus persisted Rails turns | `opencode-ruby` and `opencode-rails` |
+| App A | Ruby REST/SSE plus persisted Rails turns and Sprite lifecycle | `opencode-ruby` and `opencode-rails` |
+| App B | Ruby REST/SSE with application-owned conversation, claim, recovery, Telegram scope, and idempotency | `opencode-ruby` only |
+| App E | Direct voice-stream worker | No Ruby adapter gem |
+| App F | Custom strict-v2 server, security, and toolchain lane | No Ruby adapter gem |
+| App D | Native CLI and plugin hook/event lane | No Ruby adapter gem |
 | inference | Provider configuration, hooks, routing, and migration lane | No Ruby adapter gem |
-| Context Kit | MCP and OpenCode configuration producer | No Ruby adapter gem |
+| App G | MCP and OpenCode configuration producer | No Ruby adapter gem |
 
 Do not add `opencode-rails` to an application that owns different persistence
 semantics, and do not route plugin, provider, voice, or strict-v2 behavior
@@ -113,11 +113,12 @@ an absent browser is a runner failure, not product evidence. Keep a system-test
 suite serial when its harness shares an ephemeral server port instead of
 mistaking parallel `EADDRINUSE` failures for OpenCode regressions.
 
-GitHub and Gitea do not implement every Actions feature identically. Keep the
-same tests on both forges, but use forge-specific execution where necessary:
-GitHub retains review artifacts and parallel dynamic image jobs; Gitea runs the
-same manifest image set sequentially and makes no artifact-retention claim.
-Neither path may mutate a runner or deploy a consumer.
+GitHub and the private forge do not implement every Actions feature
+identically. Keep the same tests on both forges, but use forge-specific
+execution where necessary: GitHub retains review artifacts and parallel dynamic
+image jobs; the private forge runs the same manifest image set sequentially and
+makes no artifact-retention claim. Neither path may mutate a runner or deploy a
+consumer.
 
 A runner-only workflow repair needs exact-head CI, not an application canary.
 A client, runtime image, event, persistence, or toolchain change needs the

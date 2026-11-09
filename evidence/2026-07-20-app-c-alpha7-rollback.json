@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "consumer": "ajent-rails",
+  "consumer": "app-c",
   "profile": "rails-persisted-turn",
   "consumer_commit": "6caa0132e4b172777126ed537de99cb7e9758e0b",
   "consumer_tree": "29e6cd35313a06cef6f9c1f40a36e3ee582fd035",
   "status": "pass",
   "certified_at": "2026-07-20T08:14:53Z",
-  "tuple_sha256": "sha256:ae48333ba453f442d14263a916418a384f576db34d09a503111fc28c340eb408",
+  "tuple_sha256": "sha256:da78541602b0bfbe04acae25d6fab2468531b687d9539c944eb19f2162ce68ac",
   "clients": {
     "opencode_ruby": {
       "version": "0.0.1.alpha7",
@@ -18,10 +18,10 @@
     }
   },
   "runtime": {
-    "application_image": "docker-registry:5000/ajent_rails@sha256:fe6fdc2325d304ddb276df7d35807c183e7e574876a0d76a6c6de6014619c76e",
-    "aigl_image": "docker-registry:5000/opencode-aigl@sha256:f4064cb8b7a0f680f076dba9c72ba8e63b1457227c9fad5aa1407f0e0aac12e7",
-    "blackline_image": "docker-registry:5000/opencode-blackline@sha256:7b4ea4d70ff5fd35e3b17c571865dd6bb489217c7c00942e8569132fe2f749c8",
-    "raven_image": "docker-registry:5000/opencode-raven@sha256:9fe37ee88d8b10165e17f5f2a5c47b2396256464e732b4ef49138fb92a1234e3",
+    "application_image": "registry.example/app-c@sha256:fe6fdc2325d304ddb276df7d35807c183e7e574876a0d76a6c6de6014619c76e",
+    "product_1_image": "registry.example/opencode-product-1@sha256:f4064cb8b7a0f680f076dba9c72ba8e63b1457227c9fad5aa1407f0e0aac12e7",
+    "product_2_image": "registry.example/opencode-product-2@sha256:7b4ea4d70ff5fd35e3b17c571865dd6bb489217c7c00942e8569132fe2f749c8",
+    "product_3_image": "registry.example/opencode-product-3@sha256:9fe37ee88d8b10165e17f5f2a5c47b2396256464e732b4ef49138fb92a1234e3",
     "reported_version": "1.18.3",
     "upstream_base": "ghcr.io/anomalyco/opencode@sha256:c2d5d6398df72aac85cb1bdc8f900c71a9b75a33fb7c0a76dc1484e4b126e41e"
   },
@@ -37,22 +37,22 @@
   "application_canary": {
     "products": [
       {
-        "id": "aigl",
-        "agent": "travel-agent",
+        "id": "product-1",
+        "agent": "agent-1",
         "model": "openai-gpt-5.5",
         "final_text": "CANARY_OK",
         "status": "pass"
       },
       {
-        "id": "blackline",
-        "agent": "employment-lawyer",
+        "id": "product-2",
+        "agent": "agent-2",
         "model": "moonshot-kimi-k2.5",
         "final_text": "CANARY_OK",
         "status": "pass"
       },
       {
-        "id": "raven",
-        "agent": "raven-legal",
+        "id": "product-3",
+        "agent": "agent-3",
         "model": "moonshot-kimi-k2.5",
         "final_text": "CANARY_OK",
         "status": "pass"

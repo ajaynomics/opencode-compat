@@ -1,6 +1,6 @@
 {
   "id": "strict-v2",
-  "owner": "leela",
+  "owner": "app-f",
   "required_behaviors": [
     "exact-upstream-version-and-commit",
     "bun-toolchain-provenance",

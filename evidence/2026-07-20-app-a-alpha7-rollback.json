@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "consumer": "travelwolf",
+  "consumer": "app-a",
   "profile": "rails-persisted-turn",
   "consumer_commit": "531011defe4acc45a15ffe44a8e9da9cb610aaac",
   "consumer_tree": "d0e47b2d90ace87c6cc9c4b94b2f22987441c1f6",
   "status": "pass",
   "certified_at": "2026-07-20T06:31:42Z",
-  "tuple_sha256": "sha256:20ecec3d2c3743efcd8575e71ec46dd7b86c2865e472511d16a96d57ddb8b40c",
+  "tuple_sha256": "sha256:b2359e5a4ce4cb9f0b748223f2d792f0bf1c0e7156c3b66991c4261ee8395393",
   "clients": {
     "opencode_ruby": {
       "version": "0.0.1.alpha7",
@@ -23,15 +23,15 @@
   },
   "forge_ci": {
     "pr": {
-      "run_id": "2696",
-      "job_id": "11898",
+      "run_id": "<run-id>",
+      "job_id": "<job-id>",
       "status": "pass",
       "started_at": "2026-07-20T06:20:57Z",
       "completed_at": "2026-07-20T06:23:32Z"
     },
     "main": {
-      "run_id": "2698",
-      "job_id": "11900",
+      "run_id": "<run-id>",
+      "job_id": "<job-id>",
       "status": "pass",
       "started_at": "2026-07-20T06:23:58Z",
       "completed_at": "2026-07-20T06:25:49Z"
@@ -39,7 +39,7 @@
   },
   "shared_contract": {
     "artifact": "opencode-alpha7-shared-contract-531011de.json",
-    "source_path_at_capture": "/data/projects/travelwolf/.worktrees/opencode-alpha8-candidate-20260720/tmp/opencode-alpha7-shared-contract-531011de.json",
+    "source_path_at_capture": "<app-a-checkout>/tmp/opencode-alpha7-shared-contract-531011de.json",
     "artifact_sha256": "sha256:12cef4d8b713f32289dc98ce3a0a3ef2094a54205a160d3a5b4bcfc81f2805c9",
     "expected_text": "compat-ok",
     "full_text": "compat-ok",
@@ -49,10 +49,10 @@
   },
   "application_canary": {
     "artifact": "opencode-alpha7-application-531011de.json",
-    "source_path_at_capture": "/data/projects/travelwolf/.worktrees/opencode-alpha8-candidate-20260720/tmp/opencode-alpha7-application-531011de.json",
+    "source_path_at_capture": "<app-a-checkout>/tmp/opencode-alpha7-application-531011de.json",
     "artifact_sha256": "sha256:5f5693bba27a16bc703c3211827a09171c77d5f9ef1acf6def1917df43a6cebc",
     "checked_at": "2026-07-20T06:22:36.958Z",
-    "final_text": "TRAVELWOLF_ALPHA7_CANARY_OK",
+    "final_text": "APP_A_ALPHA7_CANARY_OK",
     "application_prompt_count": 1,
     "user_turn_count": 1,
     "authoritative_assistant_turn_count": 1,

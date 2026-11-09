@@ -18,6 +18,8 @@ jobs:
       - uses: ruby/setup-ruby@003a5c4d8d6321bd302e38f6f0ec593f77f06600 # v1
         with:
           ruby-version: "3.4"
+      - name: Install standalone test dependency
+        run: gem install minitest --version 6.0.6 --no-document
       - run: |
           ruby test/repository_test.rb
           ruby test/runtime_tuple_promoter_test.rb
@@ -68,7 +70,7 @@ jobs:
           ruby-version: "3.4"
           bundler-cache: ${{ github.server_url == 'https://github.com' }}
           working-directory: ruby-client
-      - name: Install candidate dependencies without the unavailable Gitea cache service
+      - name: Install candidate dependencies without the private forge's unavailable cache service
         if: github.server_url != 'https://github.com'
         working-directory: ruby-client
         env:
@@ -112,9 +114,9 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
-      - name: State the Gitea evidence boundary
+      - name: State the private-forge evidence boundary
         if: always() && github.server_url != 'https://github.com'
-        run: echo "Gitea executed the fixture contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
+        run: echo "The private forge executed the fixture contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
 
   lockstep-client-contract:
     needs: prepare
@@ -145,7 +147,7 @@ jobs:
           ruby-version: ${{ matrix.ruby }}
           bundler-cache: ${{ github.server_url == 'https://github.com' }}
           working-directory: opencode-rails
-      - name: Install candidate dependencies without the unavailable Gitea cache service
+      - name: Install candidate dependencies without the private forge's unavailable cache service
         if: github.server_url != 'https://github.com'
         working-directory: opencode-rails
         env:
@@ -199,9 +201,9 @@ jobs:
           include-hidden-files: true
           if-no-files-found: warn
           retention-days: 30
-      - name: State the Gitea evidence boundary
+      - name: State the private-forge evidence boundary
         if: always() && github.server_url != 'https://github.com'
-        run: echo "Gitea executed the lockstep client contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
+        run: echo "The private forge executed the lockstep client contract, but this forge has no supported immutable artifact upload; generated JSON is transient and is not review evidence."
 
   exact-image-contract:
     if: github.server_url == 'https://github.com'
@@ -267,10 +269,13 @@ jobs:
           retention-days: 30
 
   exact-image-contract-gitea:
-    if: github.server_url != 'https://github.com'
+    if: >-
+      github.server_url != 'https://github.com' &&
+      (github.event_name == 'workflow_dispatch' ||
+      (github.event_name == 'push' && github.ref == 'refs/heads/main'))
     needs: prepare
-    runs-on: ubuntu-latest
-    name: Gitea full exact image matrix
+    runs-on: private-image-build
+    name: Private forge full exact image matrix
     steps:
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
       - uses: actions/checkout@9c091bb21b7c1c1d1991bb908d89e4e9dddfe3e0 # v7.0.0
@@ -299,9 +304,7 @@ jobs:
           test "$actual_client_sha" = "$EXPECTED_CLIENT_SHA"
           echo "value=$actual_client_sha" >> "$GITHUB_OUTPUT"
       - name: Resolve the private Docker host transport
-        run: |
-          probe_host="$(ruby scripts/private_default_gateway.rb)"
-          echo "OPENCODE_PROBE_HOST=$probe_host" >> "$GITHUB_ENV"
+        run: echo "OPENCODE_PROBE_HOST=127.0.0.1" >> "$GITHUB_ENV"
       - name: Exercise the complete manifest matrix without artifact claims
         env:
           BUNDLE_GEMFILE: ${{ github.workspace }}/ruby-client/Gemfile
@@ -315,6 +318,6 @@ jobs:
           OPENCODE_COMPAT_REPOSITORY: ${{ github.repository }}
           OPENCODE_COMPAT_RUN_URL: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
         run: scripts/run_image_matrix_contract.sh
-      - name: State the Gitea evidence boundary
+      - name: State the private-forge evidence boundary
         if: always()
-        run: echo "Gitea's exact-image path uploads nothing; generated JSON is transient and is not review evidence. This job passes only after every manifest image passes."
+        run: echo "The private forge's exact-image path uploads nothing; generated JSON is transient and is not review evidence. This job passes only after every manifest image passes."

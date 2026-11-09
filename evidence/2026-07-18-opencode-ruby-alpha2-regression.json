@@ -35,13 +35,13 @@
       "status": "fail"
     },
     {
-      "target": "ajent-production-artifact",
+      "target": "app-c-production-artifact",
       "docker_image_id": "sha256:6fb2b3bf8e4cdf48e16bf6c3475e953df2f8304e77f5efe816ceb46f905eead8",
       "server_version": "1.18.3",
       "status": "fail"
     },
     {
-      "target": "mushu-production-artifact",
+      "target": "app-b-production-artifact",
       "docker_image_id": "sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
       "server_version": "0.0.0-permission-shortcuts-202606300721",
       "status": "fail"

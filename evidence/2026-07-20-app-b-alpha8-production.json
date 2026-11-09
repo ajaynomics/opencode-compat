@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "consumer": "mushu",
+  "consumer": "app-b",
   "profile": "ruby-rest-sse",
   "consumer_commit": "3f6754caab3f66537a5834f44ee63c1f05ecb047",
   "consumer_tree": "726c3878e71f7a4cf8c0b8a3fa8fc15382bbab45",
   "status": "pass",
   "certified_at": "2026-07-20T07:13:51Z",
-  "tuple_sha256": "sha256:804410a63cf2b6e4056d6dd9ce289ac72464f441c9785b6fc8dd50016263a1a8",
+  "tuple_sha256": "sha256:ec8732812cf5abbc4f8c4f20c355fc05df4b73112f818b2d4721cb65b931eff4",
   "clients": {
     "publication_state": "unpublished",
     "opencode_ruby": {
@@ -16,30 +16,30 @@
     "opencode_rails": null
   },
   "runtime": {
-    "registry_ref": "docker-registry:5000/mushu-opencode@sha256:a16bf0c4cd17698eba02244f6ba0e429b2238b6455e1415ff69fb08965c863a7",
-    "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+    "registry_ref": "registry.example/app-b-opencode@sha256:a16bf0c4cd17698eba02244f6ba0e429b2238b6455e1415ff69fb08965c863a7",
+    "base_image": "registry.example/app-b-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
     "custom_opencode_source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
     "build_source_commit": "521185613a864a16a76a21c7a60597ab3973bae9",
     "reported_version": "0.0.0-permission-shortcuts-202606300721"
   },
   "forge_ci": {
     "pr": {
-      "run_id": "2700",
-      "job_ids": ["11903", "11904", "11905", "11906", "11907"],
+      "run_id": "<run-id>",
+      "job_ids": ["<job-id>", "<job-id>", "<job-id>", "<job-id>", "<job-id>"],
       "status": "pass",
       "started_at": "2026-07-20T06:29:41Z",
       "completed_at": "2026-07-20T06:41:14Z"
     },
     "main": {
-      "run_id": "2705",
-      "job_ids": ["11934", "11935", "11936", "11937", "11938"],
+      "run_id": "<run-id>",
+      "job_ids": ["<job-id>", "<job-id>", "<job-id>", "<job-id>", "<job-id>"],
       "status": "pass",
       "started_at": "2026-07-20T06:43:03Z",
       "completed_at": "2026-07-20T06:54:58Z"
     }
   },
   "shared_contract": {
-    "review_input_path_at_capture": "/tmp/opencode-alpha8-mushu-permission-shortcuts.json",
+    "review_input_path_at_capture": "/tmp/opencode-alpha8-app-b-permission-shortcuts.json",
     "review_input_sha256": "sha256:6be88f0929815fa80839687e357473b232830aca4ccd1686f2a38ac9381088de",
     "durable_ci_evidence": "evidence/2026-07-20-opencode-alpha8-shared-client-ci.json",
     "status": "pass"
@@ -70,8 +70,8 @@
   },
   "production": {
     "checked_at": "2026-07-20T07:13:20Z",
-    "application_tag_provenance": "docker-registry:5000/mushu:3f6754caab3f66537a5834f44ee63c1f05ecb047",
-    "application_image": "docker-registry:5000/mushu@sha256:30f204184520d504c7c384c7f6e503fa3547217aaaef2f1d0d65884533bdeacd",
+    "application_tag_provenance": "registry.example/app-b:3f6754caab3f66537a5834f44ee63c1f05ecb047",
+    "application_image": "registry.example/app-b@sha256:30f204184520d504c7c384c7f6e503fa3547217aaaef2f1d0d65884533bdeacd",
     "web_health_status": 200,
     "status_health_status": 200,
     "runtime_readiness": "ready",

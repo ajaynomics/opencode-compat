@@ -1,0 +1,59 @@
+{
+  "schema_version": 1,
+  "kind": "shared-client-image-certification",
+  "status": "pass",
+  "certification_scope": "shared-client-contract-only",
+  "publication_state": "unpublished",
+  "clients": {
+    "opencode_ruby": {
+      "version": "0.0.1.alpha8",
+      "commit": "9277646a4bb2cf25a8384ffc140b154f49ea5766",
+      "executed": true
+    },
+    "opencode_rails": {
+      "version": "0.0.1.alpha8",
+      "commit": "a9add2a7c1dd3eb978aa8b4ebf9ef7e111d1057f",
+      "executed_by_image_contract": false
+    }
+  },
+  "gitea_workflow": {
+    "run_id": "<run-id>",
+    "run_attempt": 1,
+    "head_sha": "88809aa98dc6e76976bf42ba9ab28e86f1aca39b",
+    "repository": "ajaynomics/opencode-compat",
+    "run_url": "<run-url>",
+    "completed_at": "2026-08-18T21:31:14Z",
+    "status": "pass",
+    "event": "workflow_dispatch",
+    "artifact_evidence_claimed": false
+  },
+  "reviewed_local_contract": {
+    "checked_at": "2026-08-18T22:07:51Z",
+    "kind": "shared-client-image-contract",
+    "status": "pass",
+    "platform": "linux/amd64",
+    "docker_image_id": "sha256:f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f"
+  },
+  "exact_image_contracts": [
+    {
+      "id": "upstream-1.18.18-f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f",
+      "checked_at": "2026-08-18T21:31:08Z",
+      "image": "ghcr.io/anomalyco/opencode@sha256:f3e00f8e25500150373c817e24b13f2f08e2ccd4cafd53dc3ad4827d47863b6f",
+      "reported_version": "1.18.18",
+      "status": "pass",
+      "expected_text": "compat-ok",
+      "full_text": "compat-ok",
+      "authoritative_assistant_message_count": 1,
+      "llm_request_count": 1,
+      "executed_profiles": ["ruby-rest-sse"],
+      "required_consumer_profiles": []
+    }
+  ],
+  "certified_at": "2026-08-18T22:08:30Z",
+  "limitations": [
+    "No GitHub artifact exists for this image. The private forge run executed the full exact-image matrix and claimed no durable artifacts.",
+    "The exact-image contract executes opencode-ruby, not opencode-rails.",
+    "Rails persistence and each consumer application profile remain unverified for this digest.",
+    "This certification does not promote any consumer runtime tuple."
+  ]
+}

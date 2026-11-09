@@ -39,9 +39,9 @@ Profiles keep the ownership boundaries explicit:
 
 - `ruby-rest-sse`: the `opencode-ruby` HTTP/SSE adapter.
 - `rails-persisted-turn`: Rails lifecycle, persistence, and recovery semantics.
-- `voice-stream`: Greenroom's voice/LiveKit stream semantics.
-- `strict-v2`: Leela's strict version and route-ownership gate.
-- `plugin-ledger`: Ajent/plugin hook and ledger behavior.
+- `voice-stream`: App E's voice/LiveKit stream semantics.
+- `strict-v2`: App F's strict version and route-ownership gate.
+- `plugin-ledger`: App D plugin hook and ledger behavior.
 - `provider-hooks`: inference provider configuration and hook behavior.
 
 ## Run locally
@@ -84,19 +84,20 @@ external model provider.
 
 On GitHub, candidate CI uploads machine-readable fixture, lockstep-client, and
 exact-image evidence for 30 days. These artifacts are review inputs, not
-certification by themselves. Gitea runs the same repository, fixture, and
-lockstep contracts and executes every exact-image manifest entry sequentially,
-because its runner cannot expand a matrix from a dependency job's JSON output.
-The installed Gitea artifact service does not support the pinned GitHub upload
-action, so Gitea deliberately uploads nothing: its generated JSON is transient
-and must not be described as review evidence. A person must review a passing
-GitHub artifact and commit the durable certification document under `evidence/`;
-no workflow commits or promotes its own result.
+certification by themselves. The private forge runs the same repository,
+fixture, and lockstep contracts and executes every exact-image manifest entry
+sequentially, because its runner cannot expand a matrix from a dependency job's
+JSON output. The private forge's artifact service does not support the pinned
+GitHub upload action, so the private forge deliberately uploads nothing: its
+generated JSON is transient and must not be described as review evidence. A
+person must review a passing GitHub artifact and commit the durable
+certification document under `evidence/`; no workflow commits or promotes its
+own result.
 
 `manifests/image-matrix.json` binds the certified shared-client matrix to both
 exact, unpublished alpha8 commits. Each public row is explicitly scoped to the
 shared Ruby/SSE contract; its separate `required_consumer_profiles` are not
-implied by that result. The host rows bind the Ajent, Travelwolf, and Mushu
+implied by that result. The host rows bind the App C, App A, and App B
 application canaries to their exact current alpha8 and previous alpha7 consumer
 commits and durable evidence documents.
 

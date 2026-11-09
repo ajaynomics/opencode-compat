@@ -16,20 +16,20 @@
     }
   },
   "github_workflow": {
-    "run_id": "29725021192",
+    "run_id": "<run-id>",
     "run_attempt": "1",
     "head_sha": "328fa39c557d598ad09b270ad1ceab19901031cd",
     "repository": "ajaynomics/opencode-compat",
-    "run_url": "https://github.com/ajaynomics/opencode-compat/actions/runs/29725021192",
+    "run_url": "<run-url>",
     "completed_at": "2026-07-20T07:34:59Z",
     "status": "pass",
     "artifact_retention_days": 30
   },
   "gitea_workflow": {
-    "run_id": "2717",
+    "run_id": "<run-id>",
     "head_sha": "328fa39c557d598ad09b270ad1ceab19901031cd",
     "repository": "ajaynomics/opencode-compat",
-    "run_url": "https://gitea.ajay.to/ajaynomics/opencode-compat/actions/runs/2717",
+    "run_url": "<run-url>",
     "completed_at": "2026-07-20T07:36:06Z",
     "status": "pass",
     "artifact_evidence_claimed": false

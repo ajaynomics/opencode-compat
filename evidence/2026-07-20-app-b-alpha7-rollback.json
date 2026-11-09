@@ -1,12 +1,12 @@
 {
   "schema_version": 1,
-  "consumer": "mushu",
+  "consumer": "app-b",
   "profile": "ruby-rest-sse",
   "consumer_commit": "af2e9b0ce7ccacf49500450595a67c765a9d617a",
   "consumer_tree": "f43f48972ab444310508e9067831dfc6977f1a24",
   "status": "pass",
   "certified_at": "2026-07-20T06:39:46.921805Z",
-  "tuple_sha256": "sha256:8d7d3cb2d3e2d920c900a9c1ada365026872904588cff0b166903d1d6d32183f",
+  "tuple_sha256": "sha256:0bb8e6f4768f17947c69d794b433f977017421b4c08ee5c108d737515592324e",
   "clients": {
     "opencode_ruby": {
       "version": "0.0.1.alpha7",
@@ -15,21 +15,21 @@
     "opencode_rails": null
   },
   "runtime": {
-    "registry_ref": "docker-registry:5000/mushu-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
-    "base_image": "docker-registry:5000/mushu-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
+    "registry_ref": "registry.example/app-b-opencode@sha256:ed6293ca87e6db1dc07870d3ed6da21960743e6e2e904533b3c566d334b58d6a",
+    "base_image": "registry.example/app-b-opencode-base@sha256:de8a6adeefb30ce1c474cde23fe173dfe059434a13df0a54d14c7473edb33e16",
     "custom_opencode_source_commit": "99d6328b18ff8a340a928449a2aa8bc184a063f9",
     "build_source_commit": null,
     "reported_version": "0.0.0-permission-shortcuts-202606300721",
     "provenance_strength": "one-time-tag-source-attestation"
   },
   "source_availability": {
-    "origin_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719",
-    "backup_ref": "refs/heads/review/mushu-opencode-alpha7-consumer-final-20260719",
+    "origin_ref": "refs/heads/review/app-b-opencode-alpha7-consumer-final-20260719",
+    "backup_ref": "refs/heads/review/app-b-opencode-alpha7-consumer-final-20260719",
     "status": "archived"
   },
   "shared_contract": {
-    "review_input": "opencode-compat-mushu-final-head.json",
-    "review_input_path_at_capture": "/tmp/opencode-compat-mushu-final-head.json",
+    "review_input": "opencode-compat-app-b-final-head.json",
+    "review_input_path_at_capture": "/tmp/opencode-compat-app-b-final-head.json",
     "review_input_sha256": "sha256:57bf4b4f3c65159de4476b530aa0bc9b6077f1eacc69f7ea404f02314cb9760c",
     "status": "pass"
   },
@@ -62,7 +62,7 @@
     "reason": "The retained one-click application rollback uses alpha2 and the old runtime; the certified compatibility rollback is this alpha7 source tuple."
   },
   "limitations": [
-    "The old runtime image metadata does not recover an exact Mushu overlay-build commit.",
+    "The old runtime image metadata does not recover an exact App B overlay-build commit.",
     "No exact-head forge run is claimed; the clean-worktree full application canary is the application evidence."
   ]
 }
